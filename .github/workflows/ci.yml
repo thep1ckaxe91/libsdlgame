@@ -16,13 +16,22 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev cmake g++
+        sudo apt-get install -y cmake g++ python3-pip python3-venv
+        python3 -m venv venv
+        source venv/bin/activate
+        pip3 install conan
+        conan profile detect
+
+    - name: Install Conan Packages
+      run: |
+        source venv/bin/activate
+        conan install . --build=missing -s build_type=Debug
 
     - name: Configure CMake
-      run: cmake -B build -DCMAKE_BUILD_TYPE=Debug
+      run: cmake --preset conan-debug
 
     - name: Build
-      run: cmake --build build -j$(nproc)
+      run: cmake --build --preset conan-debug
 
     - name: Test
-      run: ctest --test-dir build --output-on-failure
+      run: ctest --test-dir build/Debug --output-on-failure
