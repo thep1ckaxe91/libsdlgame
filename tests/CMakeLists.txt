@@ -1,7 +1,28 @@
 find_package(GTest REQUIRED)
 
-add_executable(unit_tests test_rect.cpp)
-target_link_libraries(unit_tests PRIVATE GameEngine GTest::gtest_main)
+set(TEST_MODULES
+    color
+    display
+    draw
+    engine
+    event
+    font
+    image
+    key
+    math
+    mixer
+    mouse
+    music
+    random
+    rect
+    sprite
+    surface
+    time
+    transform
+)
 
-include(GoogleTest)
-gtest_discover_tests(unit_tests)
+foreach(module IN LISTS TEST_MODULES)
+    add_executable(test_${module} test_${module}.cpp)
+    target_link_libraries(test_${module} PRIVATE GameEngine GTest::gtest_main)
+    gtest_discover_tests(test_${module})
+endforeach()
