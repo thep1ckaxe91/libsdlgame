@@ -8,7 +8,6 @@
 
 namespace sdlgame::color {
 
-void init();
 /**
  *  class for color, all values range from [0,255]
  */

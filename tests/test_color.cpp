@@ -59,9 +59,3 @@ TEST(ColorTest, Operators) {
     (void)inv_res;
 }
 
-TEST(ColorTest, Initialization) {
-    // Calling the namespace function
-    EXPECT_NO_THROW({
-        sdlgame::color::init();
-    });
-}

@@ -26,7 +26,13 @@ void pause() { Mix_PauseMusic(); }
 void resume() { Mix_ResumeMusic(); }
 void stop() { Mix_HaltMusic(); }
 bool is_playing() { return Mix_PlayingMusic() != 0; }
-double duration() { return Mix_MusicDuration(music.get()); }
+double duration() { 
+  auto dur = Mix_MusicDuration(music.get());
+  if(dur == -1.0) {
+    std::cerr << "An error occur when trying to get music duration: " << Mix_GetError() << '\n';
+  }  
+  return dur; 
+}
 int convert_volume_value(float value) {
   return static_cast<int>(std::clamp(value, 0.0f, 1.0f) * MIX_MAX_VOLUME);
 }

@@ -5,12 +5,12 @@
 namespace sdlgame::time
 {
 
-    inline timepoint_t get_ticks()
+    timepoint_t get_ticks()
     {
         return sim_clock_t::now();
     }
 
-    inline void wait(duration_t dur)
+    void wait(duration_t dur)
     {
         if (dur > duration_t::zero())
         {

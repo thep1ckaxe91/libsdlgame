@@ -34,12 +34,12 @@ namespace sdlgame::time
     /**
      * @return get time from init in milisecond
      */
-    inline timepoint_t get_ticks();
+    timepoint_t get_ticks();
 
     /**
      * Sleep with duration, not a busy loop
      */
-    inline void wait(duration_t);
+    void wait(duration_t);
 
     /**
      * Clock object for time manegement in game

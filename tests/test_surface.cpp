@@ -17,8 +17,8 @@ TEST(SurfaceTest, DimensionsConstructorAndGetters) {
     EXPECT_DOUBLE_EQ(size.y, 600.0);
     
     auto r = surf.get_rect();
-    EXPECT_DOUBLE_EQ(r.w, 800.0);
-    EXPECT_DOUBLE_EQ(r.h, 600.0);
+    EXPECT_DOUBLE_EQ(r.getWidth(), 800.0);
+    EXPECT_DOUBLE_EQ(r.getHeight(), 600.0);
 }
 
 TEST(SurfaceTest, FillAndBlitAPI) {

@@ -39,7 +39,7 @@ void Group::remove(const std::shared_ptr<Sprite> &sprite) {
   }
 }
 bool Group::has(const std::shared_ptr<Sprite> &sprite) const {
-  return std::ranges::contains(m_sprites, sprite);
+  return std::ranges::find(m_sprites, sprite) != m_sprites.end();
 }
 void Group::update() {
   for (auto &sprite : m_sprites) {

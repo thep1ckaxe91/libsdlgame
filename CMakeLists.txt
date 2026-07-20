@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(libsdlgame VERSION 0.1.0 CXX)
+project(libsdlgame VERSION 0.1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -25,7 +25,7 @@ find_package(cpptrace REQUIRED)
 target_link_libraries(GameEngine PUBLIC 
     SDL2::SDL2
     SDL2_image::SDL2_image
-    SDL2_ttf::SDL2_ttf
+    sdl_ttf::sdl_ttf
     SDL2_mixer::SDL2_mixer
     cpptrace::cpptrace
 )
@@ -97,3 +97,4 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
         add_subdirectory(tests)
     endif()
 endif()
+

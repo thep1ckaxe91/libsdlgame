@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include "engine.hpp"
 #include "key.hpp"
 
 TEST(KeyTest, InitCallable) {
@@ -11,6 +12,8 @@ TEST(KeyTest, InitCallable) {
 }
 
 TEST(KeyTest, GetPressedReturnsSpan) {
+    sdlgame::init();
+    sdlgame::key::init();
     // Tests that get_pressed() returns a valid span (could be empty or not, depending on state)
     EXPECT_NO_THROW({
         auto pressed_keys = sdlgame::key::get_pressed();
