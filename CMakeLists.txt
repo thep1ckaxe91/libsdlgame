@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(libsdlgame CXX)
+project(libsdlgame VERSION 0.1.0 CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -8,6 +8,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 file(GLOB ENGINE_SOURCES "src/*.cpp")
 
 add_library(GameEngine STATIC ${ENGINE_SOURCES})
+add_library(GameEngine::GameEngine ALIAS GameEngine)
 
 target_include_directories(GameEngine PUBLIC 
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -21,7 +22,7 @@ find_package(SDL2_ttf REQUIRED)
 find_package(SDL2_mixer REQUIRED)
 find_package(cpptrace REQUIRED)
 
-target_link_libraries(GameEngine PRIVATE 
+target_link_libraries(GameEngine PUBLIC 
     SDL2::SDL2
     SDL2_image::SDL2_image
     SDL2_ttf::SDL2_ttf
@@ -40,11 +41,53 @@ target_compile_options(GameEngine PRIVATE
         -ftree-vectorize 
         -march=native 
     >
-    
     $<$<CONFIG:Debug>:
         -O0 
         -g3
     >
+)
+
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+
+# Install the library and export targets
+install(TARGETS GameEngine
+    EXPORT GameEngineTargets
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+# Install headers
+install(DIRECTORY include/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/libsdlgame
+)
+
+# Export the targets to a file
+install(EXPORT GameEngineTargets
+    FILE GameEngineTargets.cmake
+    NAMESPACE GameEngine::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/GameEngine
+)
+
+# Generate Config and Version files
+configure_package_config_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
+    "${CMAKE_CURRENT_BINARY_DIR}/GameEngineConfig.cmake"
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/GameEngine
+)
+
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/GameEngineConfigVersion.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY AnyNewerVersion
+)
+
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/GameEngineConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/GameEngineConfigVersion.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/GameEngine
 )
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
