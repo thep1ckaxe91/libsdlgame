@@ -1,4 +1,4 @@
-.PHONY: build test
+.PHONY: install build test
 
 install:
 	conan install . --build=missing -s build_type=Debug -s:b compiler.version=13 -s:b compiler.cppstd=20
