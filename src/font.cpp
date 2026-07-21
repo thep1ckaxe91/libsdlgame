@@ -1,6 +1,7 @@
 #include "font.hpp"
 #include "color.hpp"
-#include "stdio.h"
+#include <iostream>
+#include <exception>
 #include "surface.hpp"
 #include <SDL2/SDL_ttf.h>
 #include <string>
@@ -8,18 +9,18 @@
 namespace sdlgame::font {
 void init() {
   if (TTF_Init()) [[unlikely]] {
-    printf("Failed to init font\n%s\n", TTF_GetError());
-    exit(1);
+    std::cerr << "Failed to init font\n" << TTF_GetError() << '\n';
+    std::terminate();
   }
-  printf("Font successfully initialized\n");
+  std::cout << "Font successfully initialized\n";
   return;
 }
-Font::Font(fs::path path, int size) {
+Font::Font(const fs::path& path, int size) {
   m_height = size;
-    auto new_font = TTF_OpenFont(path.string().c_str(), size);
+  auto new_font = TTF_OpenFont(path.string().c_str(), size);
   if (!new_font) {
-    printf("Cant load font\n%s\n", TTF_GetError());
-    exit(1);
+    std::cerr << "Cant load font\n" << TTF_GetError() << '\n';
+    std::terminate();
   }
 
   m_font.reset(new_font, memory::SDLDeleter{});
@@ -36,7 +37,7 @@ Font::Font(fs::path path, int size) {
  * then will only endline when use endline character
  *
  */
-sdlgame::surface::Surface Font::render(const std::string &text,
+[[nodiscard]] sdlgame::surface::Surface Font::render(const std::string &text,
                                        AntiAlias antialias,
                                        sdlgame::color::Color color,
                                        uint32_t wrap_length,
@@ -44,28 +45,25 @@ sdlgame::surface::Surface Font::render(const std::string &text,
   sdlgame::memory::SDLUniquePtr<SDL_Surface> surface;
   switch (antialias) {
   case AntiAlias::SOLID:
-    surface.reset(TTF_RenderUTF8_Solid_Wrapped(m_font.get(), text.c_str(),
-                                               color.to_SDL_Color(),
-                                               wrap_length));
+    surface.reset(TTF_RenderUTF8_Solid_Wrapped(
+        m_font.get(), text.c_str(), color.to_SDL_Color(), wrap_length));
     break;
   case AntiAlias::SHADED:
-    surface.reset(TTF_RenderUTF8_Shaded_Wrapped(m_font.get(), text.c_str(),
-                                                color.to_SDL_Color(),
-                                                SDL_Color{0, 0, 0, 0},
-                                                wrap_length));
+    surface.reset(TTF_RenderUTF8_Shaded_Wrapped(
+        m_font.get(), text.c_str(), color.to_SDL_Color(), SDL_Color{0, 0, 0, 0},
+        wrap_length));
     break;
   case AntiAlias::BLENDED:
-    surface.reset(TTF_RenderUTF8_Blended_Wrapped(m_font.get(), text.c_str(),
-                                                 color.to_SDL_Color(),
-                                                 wrap_length));
+    surface.reset(TTF_RenderUTF8_Blended_Wrapped(
+        m_font.get(), text.c_str(), color.to_SDL_Color(), wrap_length));
     break;
   }
   if (!surface) [[unlikely]] {
-    printf("Error render font\n%s\n", TTF_GetError());
-    exit(1);
+    std::cerr << "Error render font\n" << TTF_GetError() << '\n';
+    std::terminate();
   }
-  surface::Surface res = surface::Surface(surface.get());
-  res.fill(background);
+  surface::Surface res{surface.get()};
+  
   return res;
 }
 int Font::get_height() const { return m_height; }

@@ -3,20 +3,21 @@
 #include "display.hpp"
 #include "surface.hpp"
 #include <filesystem>
-#include <stdio.h>
+#include <iostream>
+#include <exception>
 
 namespace fs = std::filesystem;
 
 namespace sdlgame::image {
 void init() {
   if ((IMG_Init(IMG_INIT_JPG) & IMG_INIT_JPG) != IMG_INIT_JPG) {
-    printf("Failed to init JPG image flags\n%s\n", IMG_GetError());
-    exit(1);
+    std::cerr << "Failed to init JPG image flags\n" << IMG_GetError() << '\n';
+    std::terminate();
   } else if ((IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG) != IMG_INIT_PNG) {
-    printf("Failed to init PNG image flags\n%s\n", IMG_GetError());
-    exit(1);
+    std::cerr << "Failed to init PNG image flags\n" << IMG_GetError() << '\n';
+    std::terminate();
   } else {
-    printf("Image successfully initialized\n");
+    std::cout << "Image successfully initialized\n";
     return;
   }
 }
@@ -25,8 +26,8 @@ void init() {
   auto tex = IMG_LoadTexture(sdlgame::display::get_renderer(), path.string().c_str());
 
   if (!tex) {
-    printf("Cant load image\n%s\n", IMG_GetError());
-    exit(1);
+    std::cerr << "Cant load image\n" << IMG_GetError() << '\n';
+    std::terminate();
   }
   return std::make_shared<const surface::Surface>(tex);
 }

@@ -9,7 +9,7 @@ TEST(ImageTest, InitDoesNotThrow) {
 }
 
 TEST(ImageTest, LoadNonExistentPathReturnsNullOrThrows) {
-    std::filesystem::path fakePath = "dummy.png";
+    std::filesystem::path fakePath = "assets/dummy.png";
     EXPECT_NO_THROW({
         try {
             auto surf = sdlgame::image::load(fakePath);
@@ -22,7 +22,7 @@ TEST(ImageTest, LoadNonExistentPathReturnsNullOrThrows) {
 TEST(ImageTest, LoadWithValidPathStringCompiles) {
     EXPECT_NO_THROW({
         try {
-            auto surf = sdlgame::image::load("dummy.jpg");
+            auto surf = sdlgame::image::load("assets/dummy.jpg");
         } catch(...) {}
     });
 }

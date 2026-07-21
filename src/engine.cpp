@@ -1,18 +1,20 @@
 #include "engine.hpp"
 #include "key.hpp"
 #include <SDL_image.h>
+#include <iostream>
+#include <exception>
 
 
 void sdlgame::init()
 {
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
     {
-        printf("Error initializing SDL: %s\n", SDL_GetError());
-        exit(0);
+        std::cerr << "Error initializing SDL: " << SDL_GetError() << '\n';
+        std::terminate();
     }
     else
     {
-        printf("SDL successfully initialized\n");
+        std::cout << "SDL successfully initialized\n";
     }
     sdlgame::image::init();
     sdlgame::font::init();

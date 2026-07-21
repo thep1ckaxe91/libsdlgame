@@ -5,6 +5,7 @@
 #include "memory.hpp"
 #include "surface.hpp"
 #include <iostream>
+#include <exception>
 
 namespace sdlgame::display {
 namespace {
@@ -40,7 +41,7 @@ sdlgame::surface::Surface &set_mode(int width, int height, uint32_t flags) {
 
   if (!window) {
     std::cerr << "Fatal: Window creation failed: " << SDL_GetError() << "\n";
-    exit(1);
+    std::terminate();
   }
 
   renderer.reset(SDL_CreateRenderer(
@@ -48,7 +49,7 @@ sdlgame::surface::Surface &set_mode(int width, int height, uint32_t flags) {
 
   if (!renderer) {
     std::cerr << "Fatal: Renderer creation failed: " << SDL_GetError() << "\n";
-    exit(1);
+    std::terminate();
   }
 
   SDL_RenderSetLogicalSize(renderer.get(), width, height);
@@ -107,15 +108,15 @@ sdlgame::surface::Surface &get_surf() { return proxy_surf; }
 
 double get_width() {
   if (proxy_surf.get_width() == 0) {
-    printf("Display not yet set mode\n");
-    exit(0);
+    std::cerr << "Display not yet set mode\n";
+    std::terminate();
   }
   return proxy_surf.get_width();
 }
 double get_height() {
   if (proxy_surf.get_height() == 0) {
-    printf("Display not yet set mode\n");
-    exit(0);
+    std::cerr << "Display not yet set mode\n";
+    std::terminate();
   }
   return proxy_surf.get_height();
 }

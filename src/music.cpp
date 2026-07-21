@@ -3,6 +3,7 @@
 #include "memory.hpp"
 #include <iostream>
 #include <algorithm>
+#include <exception>
 
 namespace sdlgame::music {
 static memory::SDLUniquePtr<Mix_Music> music;
@@ -10,8 +11,8 @@ static memory::SDLUniquePtr<Mix_Music> music;
 void load(const fs::path& path) {
   auto new_music = Mix_LoadMUS(path.string().c_str());
   if (!new_music) {
-    printf("Cant load music\nErr:%s\n", Mix_GetError());
-    exit(1);
+    std::cerr << "Cant load music\nErr:" << Mix_GetError() << '\n';
+    std::terminate();
   }
   music.reset(new_music);
 }

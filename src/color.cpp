@@ -8,6 +8,7 @@
 #include <initializer_list>
 #include <iostream>
 #include <string_view>
+#include <exception>
 
 namespace sdlgame::color {
 
@@ -194,7 +195,7 @@ Color::Color(const std::string &p_name) : a(255) {
     b = it->b;
   } else [[unlikely]] {
     std::cerr << "Unrecognize color identifier: " << p_name << '\n';
-    exit(1);
+    std::terminate();
   }
 }
 

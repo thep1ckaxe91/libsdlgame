@@ -3,6 +3,7 @@
 #include "SDL2/SDL_keyboard.h"
 #include <cassert>
 #include <iostream>
+#include <exception>
 
 namespace sdlgame::key {
 static int numKeys = 0;
@@ -14,7 +15,7 @@ void init() {
   if (!keyState) {
     std::cerr << "Keyboard state pointer is null post-initialization\nDid you "
                  "call this after SDL init?\n";
-    exit(1);
+    std::terminate();
   }
 }
 

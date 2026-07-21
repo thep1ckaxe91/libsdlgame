@@ -20,7 +20,7 @@ enum class AntiAlias : uint8_t { SOLID, SHADED, BLENDED };
 void init();
 class Font {
 public:
-  Font(fs::path path, int size = 12);
+  Font(const fs::path& path, int size = 12);
   Font() = default;
   /**
    * @return a surface that only contain the text
