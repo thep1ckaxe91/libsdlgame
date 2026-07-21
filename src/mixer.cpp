@@ -9,19 +9,19 @@ void set_num_channels(int count) { Mix_AllocateChannels(count); }
 void init(int freq, uint16_t size, int channels, int buffer) {
   size = (size == 16 ? AUDIO_S16SYS : AUDIO_F32SYS);
   if ((Mix_Init(MIX_INIT_MP3) & MIX_INIT_MP3) != MIX_INIT_MP3) {
-    std::cerr << "Failed to init mp3 type\nErr:" << Mix_GetError() << '\n';
+    std::cerr << "Failed to init mp3 type\n" << Mix_GetError() << '\n';
     std::terminate();
   }
   if ((Mix_Init(MIX_INIT_OGG) & MIX_INIT_OGG) != MIX_INIT_OGG) {
-    std::cerr << "Failed to init ogg type\nErr:" << Mix_GetError() << '\n';
+    std::cerr << "Failed to init ogg type\n" << Mix_GetError() << '\n';
     std::terminate();
   }
   if ((Mix_Init(MIX_INIT_WAVPACK) & MIX_INIT_WAVPACK) != MIX_INIT_WAVPACK) {
-    std::cerr << "Failed to init wav pack\nErr:" << Mix_GetError() << '\n';
+    std::cerr << "Failed to init wav pack\n" << Mix_GetError() << '\n';
     std::terminate();
   }
   if (Mix_OpenAudio(freq, size, channels, buffer)) {
-    std::cerr << "Failed to init mixer\nErr:" << Mix_GetError() << '\n';
+    std::cerr << "Failed to init mixer\n" << Mix_GetError() << '\n';
     std::terminate();
   } else {
     std::cout << "Mixer successfully initialized\n";
@@ -38,7 +38,7 @@ Channel::Channel(int _id) : id(_id), volume(1.0f) {}
 void Channel::play(Sound sound, int loops, int maxtime_ms, int fade_ms) {
   if (Mix_FadeInChannelTimed(id, sound.chunk.get(), loops, fade_ms,
                              maxtime_ms) == -1) [[unlikely]] {
-    std::cerr << "No channel available\nErr:" << Mix_GetError() << '\n';
+    std::cerr << "No channel available\n" << Mix_GetError() << '\n';
     std::terminate();
   }
 }
@@ -51,7 +51,7 @@ Sound::Sound() : channel(-1), volume(1.0f) {}
 Sound::Sound(fs::path path) : channel(-1), volume(1.0f) {
   auto new_chunk = Mix_LoadWAV(path.string().c_str());
   if (!new_chunk) [[unlikely]] {
-    std::cerr << "Cant load track\nErr:" << Mix_GetError() << '\n';
+    std::cerr << "Cant load track\n" << Mix_GetError() << '\n';
     std::terminate();
   }
   chunk.reset(new_chunk, memory::SDLDeleter{});
@@ -76,14 +76,14 @@ Sound &Sound::operator=(Sound &&oth) noexcept {
 Channel Sound::play(int loops, int maxtime_ms, int fade_ms) {
   channel = Mix_FadeInChannelTimed(-1, chunk.get(), loops, fade_ms, maxtime_ms);
   if (channel == -1) [[unlikely]] {
-    std::cout << "No channel available\nErr:" << Mix_GetError() << '\n';
+    std::cout << "No channel available\n" << Mix_GetError() << '\n';
   }
   return Channel(channel);
 }
 void Sound::load(const fs::path &path) {
   auto new_chunk = Mix_LoadWAV(path.string().c_str());
   if (!new_chunk) [[unlikely]] {
-    std::cerr << "Cant load track\nErr:" << Mix_GetError() << '\n';
+    std::cerr << "Cant load track\n" << Mix_GetError() << '\n';
     std::terminate();
   }
   chunk.reset(new_chunk, memory::SDLDeleter{});

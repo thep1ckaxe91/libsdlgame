@@ -11,7 +11,7 @@ static memory::SDLUniquePtr<Mix_Music> music;
 void load(const fs::path& path) {
   auto new_music = Mix_LoadMUS(path.string().c_str());
   if (!new_music) {
-    std::cerr << "Cant load music\nErr:" << Mix_GetError() << '\n';
+    std::cerr << "Cant load music\n" << Mix_GetError() << '\n';
     std::terminate();
   }
   music.reset(new_music);
@@ -20,7 +20,7 @@ void play(int loop, int fadein_ms) {
   if (!music)
     return;
   if (Mix_FadeInMusic(music.get(), loop, fadein_ms)) {
-    std::cerr << "Cant play music\nErr:" << Mix_GetError() << '\n';
+    std::cerr << "Cant play music\n" << Mix_GetError() << '\n';
   }
 }
 void pause() { Mix_PauseMusic(); }
