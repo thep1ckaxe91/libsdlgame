@@ -20,14 +20,12 @@ find_package(SDL2 REQUIRED)
 find_package(SDL2_image REQUIRED)
 find_package(SDL2_ttf REQUIRED)
 find_package(SDL2_mixer REQUIRED)
-find_package(cpptrace REQUIRED)
 
 target_link_libraries(GameEngine PUBLIC 
     SDL2::SDL2
     SDL2_image::SDL2_image
     sdl_ttf::sdl_ttf
     SDL2_mixer::SDL2_mixer
-    cpptrace::cpptrace
 )
 
 target_compile_options(GameEngine PRIVATE

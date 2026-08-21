@@ -11,8 +11,7 @@ class MyProjectConan(ConanFile):
         "sdl/2.32.10",
         "sdl_ttf/2.24.0",
         "sdl_image/2.8.8",
-        "sdl_mixer/2.8.1",
-        "cpptrace/1.0.4"
+        "sdl_mixer/2.8.1"
     ]
 
     default_options = {
