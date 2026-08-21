@@ -44,7 +44,7 @@ public:
   Channel(int id);
   void play(Sound sound, int loops = 0, int maxtime_ms = -1, int fade_ms = 0);
   void set_volume(float value);
-  int get_volume();
+  int get_volume() const;
 };
 
 /**
@@ -59,7 +59,7 @@ private:
 public:
   memory::SDLSharedPtr<Mix_Chunk> chunk;
   Sound();
-  Sound(fs::path path);
+  Sound(const fs::path& path);
   Sound(Sound&&) noexcept;
   Sound &operator=(const Sound &);
   Sound &operator=(Sound&&) noexcept;
@@ -82,7 +82,7 @@ public:
       If value > 1.0, the volume will be set to 1.0
   */
   void set_volume(float value);
-  int get_volume() const;
+  float get_volume() const;
   
 };
 
