@@ -9,36 +9,34 @@ namespace sdlgame::transform {
 surface::Surface flip(const surface::Surface &surface, bool flip_x,
                       bool flip_y) {
   surface::Surface res = surface;
-  if (SDL_SetRenderTarget(sdlgame::display::get_renderer(),
-                          res.getTexture())) {
-    std::cerr << "Failed to set target when flip:\nTexture: " << (void *)res.getTexture() << "\nError: " << SDL_GetError() << '\n';
+  if (auto ec = SDL_SetRenderTarget(sdlgame::display::get_renderer(), res.getTexture()); ec != 0) [[unlikely]] {
+    std::cerr << "Failed to set target when flip:\nTexture: " << (void *)res.getTexture() << "\nError: " << SDL_GetError() << "\nError code: " << ec << '\n';
     std::terminate();
   }
   SDL_RendererFlip flipType = static_cast<SDL_RendererFlip>(
       SDL_FLIP_NONE | (static_cast<int>(flip_x) * SDL_FLIP_HORIZONTAL) |
       (static_cast<int>(flip_y) * SDL_FLIP_VERTICAL));
-  if (SDL_RenderCopyEx(sdlgame::display::get_renderer(), surface.getTexture(),
-                       nullptr, nullptr, 0, nullptr, flipType)) {
-    std::cerr << "Failed to flip\n";
+  if (auto ec = SDL_RenderCopyEx(sdlgame::display::get_renderer(), surface.getTexture(),
+                       nullptr, nullptr, 0, nullptr, flipType); ec != 0) [[unlikely]] {
+    std::cerr << "Failed to flip\nError code: " << ec << '\n';
     std::terminate();
   }
-  if (SDL_SetRenderTarget(sdlgame::display::get_renderer(), nullptr)) {
-    std::cerr << "Failed to reset target when flip: " << SDL_GetError() << '\n';
+  if (auto ec = SDL_SetRenderTarget(sdlgame::display::get_renderer(), nullptr); ec != 0) [[unlikely]] {
+    std::cerr << "Failed to reset target when flip: " << SDL_GetError() << "\nError code: " << ec << '\n';
     std::terminate();
   }
   return res;
 }
 surface::Surface scale(const surface::Surface &surface, math::Vector2 size) {
   surface::Surface res = surface::Surface(static_cast<int>(size.x), static_cast<int>(size.y));
-  if (SDL_SetRenderTarget(sdlgame::display::get_renderer(),
-                          res.getTexture())) {
-    std::cerr << "Failed to set target when scale:\nTexture: " << (void *)res.getTexture() << "\nError: " << SDL_GetError() << '\n';
+  if (auto ec = SDL_SetRenderTarget(sdlgame::display::get_renderer(), res.getTexture()); ec != 0) [[unlikely]] {
+    std::cerr << "Failed to set target when scale:\nTexture: " << (void *)res.getTexture() << "\nError: " << SDL_GetError() << "\nError code: " << ec << '\n';
     std::terminate();
   }
   SDL_RenderCopyF(sdlgame::display::get_renderer(), surface.getTexture(),
                   nullptr, nullptr);
-  if (SDL_SetRenderTarget(sdlgame::display::get_renderer(), nullptr)) {
-    std::cerr << "Failed to reset target when scale: " << SDL_GetError() << '\n';
+  if (auto ec = SDL_SetRenderTarget(sdlgame::display::get_renderer(), nullptr); ec != 0) [[unlikely]] {
+    std::cerr << "Failed to reset target when scale: " << SDL_GetError() << "\nError code: " << ec << '\n';
     std::terminate();
   }
   return res;
@@ -73,9 +71,8 @@ surface::Surface rotate(const surface::Surface &surface, double angle_deg,
                            std::ranges::min({newtopleft.y, newbotleft.y,
                                              newbotright.y, newtopright.y})));
 
-  if (SDL_SetRenderTarget(sdlgame::display::get_renderer(),
-                          res.getTexture())) {
-    std::cerr << "Failed to set target when rotate:\nTexture: " << (void *)res.getTexture() << "\nError: " << SDL_GetError() << '\n';
+  if (auto ec = SDL_SetRenderTarget(sdlgame::display::get_renderer(), res.getTexture()); ec != 0) [[unlikely]] {
+    std::cerr << "Failed to set target when rotate:\nTexture: " << (void *)res.getTexture() << "\nError: " << SDL_GetError() << "\nError code: " << ec << '\n';
     std::terminate();
   }
 
@@ -83,8 +80,8 @@ surface::Surface rotate(const surface::Surface &surface, double angle_deg,
   SDL_FPoint tmp = {float(center.x), float(center.y)};
   SDL_RenderCopyExF(sdlgame::display::get_renderer(), surface.getTexture(),
                     nullptr, nullptr, angle_deg, &tmp, SDL_FLIP_NONE);
-  if (SDL_SetRenderTarget(sdlgame::display::get_renderer(), nullptr)) {
-    std::cerr << "Failed to reset target when rotate: " << SDL_GetError() << '\n';
+  if (auto ec = SDL_SetRenderTarget(sdlgame::display::get_renderer(), nullptr); ec != 0) [[unlikely]] {
+    std::cerr << "Failed to reset target when rotate: " << SDL_GetError() << "\nError code: " << ec << '\n';
     std::terminate();
   }
   return res;

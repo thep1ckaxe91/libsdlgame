@@ -8,7 +8,6 @@
 #include <SDL_error.h>
 #include <SDL_pixels.h>
 #include <SDL_render.h>
-#include <cpptrace/cpptrace.hpp>
 #include <exception>
 #include <iostream>
 #include <utility>
@@ -25,28 +24,29 @@ static void copy_texture(SDL_Texture *from,
                          const sdlgame::memory::SDLUniquePtr<SDL_Texture> &to) {
   auto renderer = sdlgame::display::get_renderer();
 
-  if (!SDL_SetTextureBlendMode(to.get(), SDL_BLENDMODE_NONE)) [[unlikely]] {
-    std::cout << "Warning: Can't set texture blendmode to NONE\n"
-              << SDL_GetError() << "\n";
+  if (auto ec = SDL_SetTextureBlendMode(to.get(), SDL_BLENDMODE_BLEND); ec != 0)
+      [[unlikely]] {
+    std::cout << "Warning: Can't set texture blendmode when copying texture\n"
+              << SDL_GetError() << "\n"
+              << "Error code: " << ec << '\n';
   }
-  if (!SDL_SetRenderTarget(renderer, to.get())) [[unlikely]] {
+  if (auto ec = SDL_SetRenderTarget(renderer, to.get()); ec != 0) [[unlikely]] {
     std::cerr << "Failed to set render target when copying texture\n"
-              << SDL_GetError() << '\n';
+              << SDL_GetError() << '\n'
+              << "Error code: " << ec << '\n';
     std::terminate();
   }
-  if (!SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0))
-      [[unlikely]] {
+  if (SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0)) [[unlikely]] {
     std::cout << "Warning: Can't set render draw color to clear\n"
               << SDL_GetError() << '\n';
   }
-  if (!SDL_RenderClear(renderer)) [[unlikely]] {
+  if (SDL_RenderClear(renderer)) [[unlikely]] {
     std::cerr << "Failed to clear the target texture\n"
               << SDL_GetError() << '\n';
     std::terminate();
   }
   if (from != nullptr) {
-    if (!SDL_RenderCopy(renderer, from, nullptr, nullptr))
-        [[unlikely]] {
+    if (SDL_RenderCopy(renderer, from, nullptr, nullptr)) [[unlikely]] {
       std::cerr
           << "Failed to copy the source texture to the destination texture\n"
           << SDL_GetError() << '\n';
@@ -54,7 +54,7 @@ static void copy_texture(SDL_Texture *from,
     }
   }
 
-  if (!SDL_SetRenderTarget(renderer, nullptr)) [[unlikely]] {
+  if (SDL_SetRenderTarget(renderer, nullptr)) [[unlikely]] {
     std::cerr << "Failed to reset renderer target when copying texture\n"
               << SDL_GetError() << '\n';
     std::terminate();
@@ -88,13 +88,15 @@ Surface::Surface(const Surface &oth) {
     std::terminate();
   }
 
-  texture.reset(SDL_CreateTexture(display::get_renderer(),
-                                  SDL_PIXELFORMAT_RGBA32, SURFACE_TYPE, w, h));
-  if (texture == nullptr) [[unlikely]] {
+  auto new_tex = SDL_CreateTexture(display::get_renderer(),
+                                   SDL_PIXELFORMAT_RGBA32, SURFACE_TYPE, w, h);
+
+  if (!new_tex) [[unlikely]] {
     std::cerr << "Failed to create texture from another Surface object\n"
               << SDL_GetError() << '\n';
     std::terminate();
   }
+  texture.reset(new_tex);
   copy_texture(oth.getTexture(), texture);
   size.x = w;
   size.y = h;
@@ -105,16 +107,19 @@ Surface::Surface(Surface &&other) noexcept
       size(std::exchange(other.size, {0, 0})) {}
 
 Surface::Surface(SDL_Texture *oth) {
-  sdlgame::memory::SDLUniquePtr<SDL_Texture> old_tex{oth};
   int w, h;
-  SDL_QueryTexture(old_tex.get(), nullptr, nullptr, &w, &h);
-  texture.reset(SDL_CreateTexture(display::get_renderer(),
-                                  SDL_PIXELFORMAT_RGBA32, SURFACE_TYPE, w, h));
-  if (texture == nullptr) {
+  SDL_QueryTexture(oth, nullptr, nullptr, &w, &h);
+
+  auto new_tex = SDL_CreateTexture(display::get_renderer(),
+                                   SDL_PIXELFORMAT_RGBA32, SURFACE_TYPE, w, h);
+
+  if (!new_tex) {
     std::cerr << "Failed to create texture from another texture\n"
               << SDL_GetError() << '\n';
     std::terminate();
   }
+
+  texture.reset(new_tex);
 
   copy_texture(oth, texture);
 
@@ -123,19 +128,28 @@ Surface::Surface(SDL_Texture *oth) {
 }
 
 Surface::Surface(SDL_Surface *surf) : size(surf->w, surf->h) {
-  memory::SDLUniquePtr<SDL_Texture> s_tex{
-      SDL_CreateTextureFromSurface(display::get_renderer(), surf)};
-  // FIXME: the return texture return by create texture from surface is static
+  auto content = SDL_CreateTextureFromSurface(display::get_renderer(), surf);
 
-  texture.reset(SDL_CreateTexture(sdlgame::display::get_renderer(),
-                                  SDL_PIXELFORMAT_RGBA32, SURFACE_TYPE, surf->w,
-                                  surf->h));
+  if (!content) {
+    std::cerr
+        << "Failed to create texture from surface when constructing texture\n"
+        << SDL_GetError() << '\n';
+    std::terminate();
+  }
 
-  if (!texture) {
+  memory::SDLUniquePtr<SDL_Texture> s_tex{content};
+
+  auto new_tex =
+      SDL_CreateTexture(sdlgame::display::get_renderer(),
+                        SDL_PIXELFORMAT_RGBA32, SURFACE_TYPE, surf->w, surf->h);
+
+  if (!new_tex) [[unlikely]] {
     std::cerr << "Failed to create new texture while creating from surface\n"
               << SDL_GetError() << '\n';
     std::terminate();
   }
+
+  texture.reset(new_tex);
 
   copy_texture(s_tex.get(), texture);
 }
@@ -178,19 +192,12 @@ Surface &Surface::operator=(Surface &&other) noexcept(true) {
   return *this;
 }
 
-/**
- * Return a copy of the surface rect
- *
- */
 rect::Rect Surface::get_rect() const {
   return rect::Rect(0, 0, size.x, size.y);
 }
+
 SDL_Texture *Surface::getTexture() const { return texture.get(); }
-/**
- * Blit a surface onto this surface with position and size, leave size be -1,-1
-will be its original size
- * the surface or image will stretch or shrink acoording to the size
- */
+
 void Surface::blit(const Surface &source, math::Vector2 pos,
                    math::Vector2 _size, rect::Rect area) {
   if (area == rect::Rect()) {
@@ -200,50 +207,64 @@ void Surface::blit(const Surface &source, math::Vector2 pos,
       rect::Rect(pos.x, pos.y, (_size.x < 0 ? source.get_width() : _size.x),
                  (_size.y < 0 ? source.get_height() : _size.y));
 
-  if (SDL_SetRenderTarget(display::get_renderer(), texture.get())) {
+  if (auto ec = SDL_SetRenderTarget(display::get_renderer(), texture.get());
+      ec != 0) [[unlikely]] {
     std::cerr << "Failed to set target when blit:\nTexture: "
-              << (void *)texture.get() << "\nError: " << SDL_GetError() << '\n';
+              << (void *)texture.get() << "\nError: " << SDL_GetError()
+              << "\nError code: " << ec << '\n';
     std::terminate();
   }
 
   SDL_Rect srcrect = area.to_SDL_Rect();
   SDL_FRect dstrect = destrect.to_SDL_FRect();
 
-  if (SDL_RenderCopyF(display::get_renderer(), source.getTexture(), &srcrect,
-                      &dstrect)) {
-    std::cerr << "Error copy texture onto another\n" << SDL_GetError() << '\n';
+  if (auto ec = SDL_RenderCopyF(display::get_renderer(), source.getTexture(),
+                                &srcrect, &dstrect);
+      ec != 0) [[unlikely]] {
+    std::cerr << "Error copy texture onto another\n"
+              << SDL_GetError() << "\nError code: " << ec << '\n';
     std::terminate();
   }
 
-  if (SDL_SetRenderTarget(display::get_renderer(), nullptr)) {
-    std::cerr << "Failed to reset target when blit: " << SDL_GetError() << '\n';
+  if (auto ec = SDL_SetRenderTarget(display::get_renderer(), nullptr); ec != 0)
+      [[unlikely]] {
+    std::cerr << "Failed to reset target when blit: " << SDL_GetError()
+              << "\nError code: " << ec << '\n';
     std::terminate();
   }
 }
+
 void Surface::fill(sdlgame::color::Color color) {
-  if (SDL_SetRenderTarget(display::get_renderer(), texture.get())) {
+  if (auto ec = SDL_SetRenderTarget(display::get_renderer(), texture.get());
+      ec != 0) [[unlikely]] {
     std::cerr << "Failed to set target when fill:\nTexture: "
-              << (void *)texture.get() << "\nError: " << SDL_GetError() << '\n';
-    cpptrace::generate_trace().print();
+              << (void *)texture.get() << "\nError: " << SDL_GetError()
+              << "\nError code: " << ec << '\n';
     std::terminate();
   }
 
-  if (SDL_SetRenderDrawColor(display::get_renderer(), color.r, color.g, color.b,
-                             color.a)) {
+  if (auto ec = SDL_SetRenderDrawColor(display::get_renderer(), color.r,
+                                       color.g, color.b, color.a);
+      ec != 0) [[unlikely]] {
     std::cerr << "Cannot set renderer draw color before fill surface \n"
-              << SDL_GetError() << '\n';
+              << SDL_GetError() << "\nError code: " << ec << '\n';
     std::terminate();
   }
-  if (SDL_RenderClear(display::get_renderer())) {
-    std::cerr << "Cannot perform fill on surface\n" << SDL_GetError() << '\n';
+  if (auto ec = SDL_RenderClear(display::get_renderer()); ec != 0)
+      [[unlikely]] {
+    std::cerr << "Cannot perform fill on surface\n"
+              << SDL_GetError() << "\nError code: " << ec << '\n';
     std::terminate();
   }
 
-  if (SDL_SetRenderTarget(display::get_renderer(), nullptr)) {
-    std::cerr << "Failed to reset target when fill: " << SDL_GetError() << '\n';
+  if (auto ec = SDL_SetRenderTarget(display::get_renderer(), nullptr); ec != 0)
+      [[unlikely]] {
+    std::cerr << "Failed to reset target when fill: " << SDL_GetError()
+              << "\nError code: " << ec << '\n';
     std::terminate();
   }
 }
+
 math::Vector2 Surface::get_size() const { return size; }
 double Surface::get_width() const { return size.x; }
 double Surface::get_height() const { return size.y; }

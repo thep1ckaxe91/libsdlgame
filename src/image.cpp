@@ -22,11 +22,11 @@ void init() {
   }
 }
 // sdlgame::surface::Surface img_transfer_surf;
-[[nodiscard]] std::shared_ptr<const surface::Surface> load(const fs::path path) {
+[[nodiscard]] std::shared_ptr<const surface::Surface> load(const fs::path& path) {
   auto tex = IMG_LoadTexture(sdlgame::display::get_renderer(), path.string().c_str());
-
+  std::cerr << "Renderer: " << sdlgame::display::get_renderer() << '\n';
   if (!tex) {
-    std::cerr << "Cant load image\n" << IMG_GetError() << '\n';
+    std::cerr << "Can't load image\n" << IMG_GetError() << '\n';
     std::terminate();
   }
   return std::make_shared<const surface::Surface>(tex);

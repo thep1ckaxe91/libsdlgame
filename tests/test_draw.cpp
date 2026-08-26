@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
+#include "display.hpp"
 #include "draw.hpp"
+#include "engine.hpp"
 #include "surface.hpp"
 #include "color.hpp"
 #include "rect.hpp"
@@ -10,6 +12,8 @@ protected:
     sdlgame::surface::Surface surf;
 
     void SetUp() override {
+        sdlgame::init();
+        sdlgame::display::set_mode(600,400);
         surf = sdlgame::surface::Surface(100, 100);
     }
 };

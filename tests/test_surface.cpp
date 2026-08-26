@@ -1,4 +1,6 @@
 #include <gtest/gtest.h>
+#include "display.hpp"
+#include "engine.hpp"
 #include "surface.hpp"
 #include "color.hpp"
 #include "math.hpp"
@@ -8,6 +10,9 @@
 using namespace sdlgame::surface;
 
 TEST(SurfaceTest, DimensionsConstructorAndGetters) {
+    sdlgame::init();
+    sdlgame::display::set_mode(800,600);
+
     Surface surf(800, 600);
     EXPECT_DOUBLE_EQ(surf.get_width(), 800.0);
     EXPECT_DOUBLE_EQ(surf.get_height(), 600.0);
@@ -22,6 +27,8 @@ TEST(SurfaceTest, DimensionsConstructorAndGetters) {
 }
 
 TEST(SurfaceTest, FillAndBlitAPI) {
+    sdlgame::init();
+    sdlgame::display::set_mode(800,600);
     Surface dest(400, 300);
     Surface src(100, 100);
     
@@ -34,6 +41,8 @@ TEST(SurfaceTest, FillAndBlitAPI) {
 }
 
 TEST(SurfaceTest, MoveSemantics) {
+    sdlgame::init();
+    sdlgame::display::set_mode(800,600);
     Surface surf1(200, 150);
     Surface surf2(std::move(surf1));
     
@@ -47,6 +56,8 @@ TEST(SurfaceTest, MoveSemantics) {
 }
 
 TEST(SurfaceTest, CopySemantics) {
+    sdlgame::init();
+    sdlgame::display::set_mode(800,600);
     Surface surf1(300, 200);
     Surface surf2(surf1);
     
