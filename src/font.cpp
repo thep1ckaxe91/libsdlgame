@@ -1,9 +1,9 @@
 #include "font.hpp"
 #include "color.hpp"
-#include <iostream>
-#include <exception>
 #include "surface.hpp"
 #include <SDL2/SDL_ttf.h>
+#include <exception>
+#include <iostream>
 #include <string>
 
 namespace sdlgame::font {
@@ -15,7 +15,7 @@ void init() {
   std::cout << "Font successfully initialized\n";
   return;
 }
-Font::Font(const fs::path& path, int size) {
+Font::Font(const fs::path &path, int size) {
   m_height = size;
   auto new_font = TTF_OpenFont(path.string().c_str(), size);
   if (!new_font) {
@@ -37,11 +37,10 @@ Font::Font(const fs::path& path, int size) {
  * then will only endline when use endline character
  *
  */
-[[nodiscard]] sdlgame::surface::Surface Font::render(const std::string &text,
-                                       AntiAlias antialias,
-                                       sdlgame::color::Color color,
-                                       uint32_t wrap_length,
-                                       sdlgame::color::Color background) {
+[[nodiscard]] sdlgame::surface::Surface
+Font::render(const std::string &text, AntiAlias antialias,
+             sdlgame::color::Color color, uint32_t wrap_length,
+             sdlgame::color::Color background) {
   sdlgame::memory::SDLUniquePtr<SDL_Surface> surface;
   switch (antialias) {
   case AntiAlias::SOLID:
@@ -62,8 +61,10 @@ Font::Font(const fs::path& path, int size) {
     std::cerr << "Error render font\n" << TTF_GetError() << '\n';
     std::terminate();
   }
-  surface::Surface res{surface.get()};
-  
+
+  surface::Surface res{surface->w, surface->h};
+  res.fill(background);
+  res.blit(surface::Surface{surface.get()}, {0, 0});
   return res;
 }
 int Font::get_height() const { return m_height; }

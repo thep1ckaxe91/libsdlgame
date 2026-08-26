@@ -7,9 +7,8 @@
 
 void sdlgame::init()
 {
-    if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
-    {
-        std::cerr << "Error initializing SDL: " << SDL_GetError() << '\n';
+    if (auto ec = (SDL_Init(SDL_INIT_EVERYTHING) != 0); ec != 0) [[unlikely]] {
+        std::cerr << "Error initializing SDL: " << SDL_GetError() << "\nError code: " << ec << '\n';
         std::terminate();
     }
     else
