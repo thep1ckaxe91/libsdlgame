@@ -19,4 +19,4 @@
 - [x] Initial CMake and GTest setup
 - [x] Initial GitHub Actions CI setup
 - [x] Basic test setup for TDD
-- [ ] Migrate dependencies from FetchContent/system packages to Conan
+- [x] Migrate dependencies from FetchContent/system packages to Conan

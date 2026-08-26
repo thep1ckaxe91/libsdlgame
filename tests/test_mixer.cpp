@@ -27,16 +27,16 @@ TEST(MixerTest, SoundConstructorsAndVolume) {
     Sound snd;
     snd.set_volume(0.75f);
     
-    int vol = snd.get_volume();
+    float vol = snd.get_volume();
     EXPECT_GE(vol, 0);
     
-    Sound snd_moved(std::move(snd));
-    int moved_vol = snd_moved.get_volume();
+    Sound snd_moved{std::move(snd)};
+    float moved_vol = snd_moved.get_volume();
     EXPECT_EQ(moved_vol, vol);
     
     Sound snd_assigned;
     snd_assigned = std::move(snd_moved);
-    EXPECT_GE(snd_assigned.get_volume(), 0);
+    EXPECT_NEAR(static_cast<double>(snd_assigned.get_volume()), 0.75, 0.01);
 }
 
 TEST(MixerTest, SoundAndChannelAPI) {

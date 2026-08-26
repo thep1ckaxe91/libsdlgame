@@ -42,7 +42,7 @@ private:
 
 public:
   Channel(int id);
-  void play(Sound sound, int loops = 0, int maxtime_ms = -1, int fade_ms = 0);
+  void play(const Sound& sound, int loops = 0, int maxtime_ms = -1, int fade_ms = 0);
   void set_volume(float value);
   int get_volume() const;
 };
