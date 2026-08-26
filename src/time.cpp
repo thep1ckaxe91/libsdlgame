@@ -1,4 +1,5 @@
 #include "time.hpp"
+#include <format>
 #include <thread>
 #include <numeric>
 
@@ -120,8 +121,9 @@ namespace sdlgame::time
         if (functions_stats.contains(name))
         {
             return functions_stats.at(name);
+        } else {
+            return functions_stats[name] = {};
         }
-        throw std::runtime_error("Name doesnt exist");
     }
 
     void TimerManager::report(const std::string &name, duration_t dur)

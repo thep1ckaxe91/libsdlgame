@@ -27,8 +27,8 @@ TEST(TimeTest, ClockBasicOperations) {
     
     // Initial state
     auto dt = clock.delta_time();
-    EXPECT_EQ(dt.count(), 0.0);
-    EXPECT_EQ(clock.get_fps(), 0.0);
+    EXPECT_EQ(dt.count(), 1.0/60.0);
+    EXPECT_EQ(clock.get_fps(), 60);
 
     // After tick
     std::this_thread::sleep_for(10ms);

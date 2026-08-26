@@ -81,10 +81,10 @@ namespace sdlgame::time
 
     struct FunctionStats
     {
-        duration_t total_time;
-        duration_t min_time;
-        duration_t max_time;
-        size_t call_count;
+        duration_t total_time{};
+        duration_t min_time{};
+        duration_t max_time{};
+        size_t call_count = 0;
 
         duration_t avg_time() const;
         FunctionStats();
