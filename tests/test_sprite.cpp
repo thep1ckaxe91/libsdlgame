@@ -200,3 +200,197 @@ TEST(SpriteTest, SpriteCollideFunction) {
   EXPECT_FALSE(group->has(sprite2));
   EXPECT_TRUE(group->has(sprite3)); // still in group because it didn't collide
 }
+
+// ================= WHITE-BOX TESTS =================
+
+TEST(SpriteTest, GroupAddNullptr) {
+  auto group = std::make_shared<Group>();
+  group->add(nullptr);
+  EXPECT_EQ(group->sprites().size(), 0);
+}
+
+TEST(SpriteTest, GroupAddDuplicate) {
+  auto group = std::make_shared<Group>();
+  auto sprite = std::make_shared<TestSprite>();
+  group->add(sprite);
+  group->add(sprite);
+  EXPECT_EQ(group->sprites().size(), 1);
+  EXPECT_EQ(sprite->groups().size(), 1);
+}
+
+TEST(SpriteTest, GroupRemoveNonExistent) {
+  auto group = std::make_shared<Group>();
+  auto sprite = std::make_shared<TestSprite>();
+  group->remove(sprite);
+  EXPECT_EQ(group->sprites().size(), 0);
+}
+
+TEST(SpriteTest, GroupRemoveCleansExpiredWeakPtrs) {
+  auto group1 = std::make_shared<Group>();
+  auto sprite = std::make_shared<TestSprite>();
+  
+  {
+    auto group2 = std::make_shared<Group>();
+    sprite->add(group1);
+    sprite->add(group2);
+  }
+  
+  group1->remove(sprite);
+  EXPECT_EQ(sprite->groups().size(), 0);
+}
+
+TEST(SpriteTest, GroupUpdate) {
+  auto group = std::make_shared<Group>();
+  auto sprite1 = std::make_shared<TestSprite>();
+  auto sprite2 = std::make_shared<TestSprite>();
+  
+  sprite1->get_rect() = Rect(0, 0, 10, 10);
+  sprite2->get_rect() = Rect(0, 0, 10, 10);
+  
+  group->add(sprite1);
+  group->add(sprite2);
+  
+  group->update();
+  
+  EXPECT_EQ(sprite1->get_rect().getLeft(), 1);
+  EXPECT_EQ(sprite2->get_rect().getLeft(), 1);
+}
+
+TEST(SpriteTest, GroupDraw) {
+  sdlgame::init();
+  sdlgame::display::set_mode(600, 400);
+
+  auto surf = sdlgame::image::load("assets/dummy.png");
+  auto dest = sdlgame::image::load("assets/dummy.png");
+  auto sprite = std::make_shared<TestSprite>(surf);
+  
+  auto group = std::make_shared<Group>();
+  group->add(sprite);
+  
+  auto sprite_no_image = std::make_shared<TestSprite>();
+  group->add(sprite_no_image);
+  
+  group->draw(*dest);
+  EXPECT_TRUE(true);
+}
+
+TEST(SpriteTest, GroupIterators) {
+  auto group = std::make_shared<Group>();
+  auto sprite1 = std::make_shared<TestSprite>();
+  auto sprite2 = std::make_shared<TestSprite>();
+  group->add(sprite1);
+  group->add(sprite2);
+  
+  int count = 0;
+  for (auto it = group->begin(); it != group->end(); ++it) {
+    count++;
+  }
+  EXPECT_EQ(count, 2);
+}
+
+TEST(SpriteTest, SpriteAddRemoveGroup) {
+  auto group = std::make_shared<Group>();
+  auto sprite = std::make_shared<TestSprite>();
+  
+  sprite->add(group);
+  EXPECT_TRUE(group->has(sprite));
+  EXPECT_EQ(sprite->groups().size(), 1);
+  
+  sprite->remove(group);
+  EXPECT_FALSE(group->has(sprite));
+  EXPECT_EQ(sprite->groups().size(), 0);
+}
+
+TEST(SpriteTest, SpriteGroupsCache) {
+  auto sprite = std::make_shared<TestSprite>();
+  auto group1 = std::make_shared<Group>();
+  auto group2 = std::make_shared<Group>();
+  
+  sprite->add(group1);
+  sprite->add(group2);
+  
+  auto groups = sprite->groups();
+  EXPECT_EQ(groups.size(), 2);
+  
+  auto groups2 = sprite->groups();
+  EXPECT_EQ(groups2.size(), 2);
+  
+  sprite->remove(group1);
+  auto groups3 = sprite->groups();
+  EXPECT_EQ(groups3.size(), 1);
+  EXPECT_EQ(groups3[0], group2);
+}
+
+TEST(SpriteTest, SpriteGroupsExpiredWeakPtr) {
+  auto sprite = std::make_shared<TestSprite>();
+  {
+    auto group = std::make_shared<Group>();
+    group->add(sprite);
+  }
+  
+  auto groups = sprite->groups();
+  EXPECT_EQ(groups.size(), 0);
+}
+
+TEST(SpriteTest, SpriteConstGetRect) {
+  auto sprite = std::make_shared<TestSprite>();
+  sprite->get_rect() = Rect(1, 2, 3, 4);
+  
+  const TestSprite& const_sprite = *sprite;
+  EXPECT_EQ(const_sprite.get_rect().getLeft(), 1);
+}
+
+TEST(SpriteTest, SpriteGetImage) {
+  sdlgame::init();
+  sdlgame::display::set_mode(600, 400);
+
+  auto surf = sdlgame::image::load("assets/dummy.png");
+  auto sprite = std::make_shared<TestSprite>(surf);
+  
+  const auto& img = sprite->get_image();
+  EXPECT_EQ(img.get_rect().getWidth(), surf->get_rect().getWidth());
+}
+
+TEST(SpriteTest, GroupSingleAddNullptr) {
+  auto group = std::make_shared<GroupSingle>();
+  group->add(nullptr);
+  EXPECT_EQ(group->sprites().size(), 0);
+}
+
+TEST(SpriteTest, GroupSingleConstructNullptr) {
+  auto group = std::make_shared<GroupSingle>(nullptr);
+  EXPECT_EQ(group->sprites().size(), 0);
+}
+
+TEST(SpriteTest, GroupSingleAddSame) {
+  auto group = std::make_shared<GroupSingle>();
+  auto sprite = std::make_shared<TestSprite>();
+  group->add(sprite);
+  group->add(sprite);
+  EXPECT_EQ(group->sprites().size(), 1);
+  EXPECT_EQ(sprite->groups().size(), 1);
+}
+
+TEST(SpriteTest, GroupSingleRemoveEmpty) {
+  auto group = std::make_shared<GroupSingle>();
+  group->remove(); 
+  EXPECT_EQ(group->sprites().size(), 0);
+}
+
+TEST(SpriteTest, SpriteCollideEmptyGroup) {
+  auto group = std::make_shared<Group>();
+  auto sprite = std::make_shared<TestSprite>();
+  auto collided = spritecollide(sprite, group, false);
+  EXPECT_TRUE(collided.empty());
+}
+
+TEST(SpriteTest, CollideCircleExplicitRadii) {
+  auto sprite1 = std::make_shared<TestSprite>();
+  sprite1->get_rect() = Rect(0, 0, 10, 10);
+  
+  auto sprite2 = std::make_shared<TestSprite>();
+  sprite2->get_rect() = Rect(8, 0, 10, 10);
+  
+  EXPECT_TRUE(collide_circle(*sprite1, *sprite2, 5.0, 5.0));
+  EXPECT_FALSE(collide_circle(*sprite1, *sprite2, 3.0, 3.0));
+}
