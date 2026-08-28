@@ -5,7 +5,7 @@ TEST_SUITE ?= .*
 install:
 	conan install . --build=missing -s build_type=Debug -s:b compiler.version=13 -s:b compiler.cppstd=20
 
-build: install
+build:
 	cmake --preset conan-debug
 	cmake --build --preset conan-debug -j$(nproc)
 
@@ -14,9 +14,3 @@ test: build
 
 clean:
 	rm -rf build
-
-release: 
-	conan install . --build=missing -s build_type=Release -s:b compiler.version=13 -s:b compiler.cppstd=20
-	cmake --preset conan-release
-	cmake --build --preset conan-release -j$(nproc)
-	
