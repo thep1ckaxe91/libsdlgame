@@ -2,11 +2,34 @@
 #include "engine.hpp"
 #include "key.hpp"
 
+
+
+TEST(KeyDeathTest, GetPressedWithoutInit) {
+    // White-box test: Tests the internal assert in get_pressed() when keyState is null.
+    // Death tests run in a forked process before other tests, ensuring init() hasn't been called.
+#ifndef NDEBUG
+    EXPECT_DEATH({
+        sdlgame::key::get_pressed();
+    }, "init\\(\\) was never called");
+#endif
+}
+
 TEST(KeyTest, InitCallable) {
     // Tests that init() can be called without exception.
     // Note: Actual SDL initialization context might be missing in unit tests,
     // but we only verify the API signature here.
     EXPECT_NO_THROW({
+        sdlgame::init();
+        sdlgame::key::init();
+    });
+}
+
+TEST(KeyTest, InitIdempotent) {
+    // White-box test: Testing multiple calls to init() to ensure it doesn't leak or fault.
+    // Internally it just re-assigns keyState and numKeys from SDL_GetKeyboardState.
+    sdlgame::init();
+    EXPECT_NO_THROW({
+        sdlgame::key::init();
         sdlgame::key::init();
     });
 }
@@ -25,4 +48,28 @@ TEST(KeyTest, GetPressedReturnsSpan) {
             (void)first_element;
         }
     });
+}
+
+TEST(KeyTest, GetPressedHasValidSize) {
+    // White-box test: Checks that numKeys was correctly populated.
+    // After initialization, numKeys (and thus span size) should be > 0.
+    sdlgame::init();
+    sdlgame::key::init();
+    auto pressed_keys = sdlgame::key::get_pressed();
+    EXPECT_GT(pressed_keys.size(), 0) << "Expected internal numKeys to be updated to a positive value.";
+}
+
+TEST(KeyTest, GetPressedSpanBoundary) {
+    // White-box test: Check loop/access boundaries of the internal span.
+    sdlgame::init();
+    sdlgame::key::init();
+    auto pressed_keys = sdlgame::key::get_pressed();
+    
+    // Ensure we can safely access the very last element without out-of-bounds fault
+    if (pressed_keys.size() > 0) {
+        EXPECT_NO_THROW({
+            volatile uint8_t last_key = pressed_keys[pressed_keys.size() - 1];
+            (void)last_key;
+        });
+    }
 }
