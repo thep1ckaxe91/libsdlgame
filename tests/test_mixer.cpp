@@ -52,3 +52,61 @@ TEST(MixerTest, SoundAndChannelAPI) {
     
     SUCCEED();
 }
+
+TEST(MixerTest, ConvertVolumeValueEdgeCases) {
+    EXPECT_EQ(convert_volume_value(-1.0f), 0);
+    EXPECT_EQ(convert_volume_value(0.0f), 0);
+    EXPECT_EQ(convert_volume_value(0.5f), int(0.5f * MIX_MAX_VOLUME));
+    EXPECT_EQ(convert_volume_value(1.0f), MIX_MAX_VOLUME);
+    EXPECT_EQ(convert_volume_value(2.0f), MIX_MAX_VOLUME);
+}
+
+TEST(MixerTest, SoundCopyAssignment) {
+    Sound snd1;
+    snd1.set_volume(0.3f);
+    
+    Sound snd2;
+    snd2 = snd1;
+    EXPECT_EQ(snd2.get_volume(), 0.3f);
+    EXPECT_EQ(snd2.chunk.get(), snd1.chunk.get());
+}
+
+TEST(MixerTest, SoundLoadInvalidPathTerminates) {
+    EXPECT_DEATH({
+        Sound snd("nonexistent_path_12345.wav");
+    }, "Cant load track");
+    
+    EXPECT_DEATH({
+        Sound snd;
+        snd.load("nonexistent_path_12345.wav");
+    }, "Cant load track");
+}
+
+TEST(MixerTest, ChannelPlayTerminatesOnFailure) {
+    EXPECT_DEATH({
+        Sound snd;
+        Channel ch(1);
+        ch.play(snd); 
+    }, "No channel available");
+}
+
+TEST(MixerTest, SoundPlayPrintsOnFailure) {
+    testing::internal::CaptureStdout();
+    Sound snd;
+    snd.play();
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_TRUE(output.find("No channel available") != std::string::npos);
+}
+
+TEST(MixerTest, SoundFadeOut) {
+    Sound snd;
+    snd.fadeout(100);
+    SUCCEED();
+}
+
+TEST(MixerTest, InitFailsAndTerminates) {
+    EXPECT_DEATH({
+        // Passing completely invalid parameters to force Mix_OpenAudio to fail
+        init(-1, 0, -1, -1);
+    }, "Failed to init mixer");
+}
