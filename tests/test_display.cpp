@@ -62,3 +62,61 @@ TEST(DisplayTest, RenderContextAndCleanup) {
     // Basic checks just to ensure variables are compiled and used.
     EXPECT_TRUE(true);
 }
+
+TEST(DisplayDeathTest, UninitializedDisplayWidth) {
+    EXPECT_DEATH(display::get_width(), "Display not yet set mode");
+}
+
+TEST(DisplayDeathTest, UninitializedDisplayHeight) {
+    EXPECT_DEATH(display::get_height(), "Display not yet set mode");
+}
+
+TEST(DisplayTest, SetModeDesktopFallback) {
+    display::set_mode(0, 0, 0);
+    EXPECT_GT(display::get_width(), 0.0);
+    EXPECT_GT(display::get_height(), 0.0);
+}
+
+TEST(DisplayTest, GrabLogicBranches) {
+    display::set_mode(800, 600, 0);
+    
+    display::grab(1);
+    EXPECT_TRUE(display::grab(-1));
+    
+    display::grab(0);
+    EXPECT_FALSE(display::grab(-1));
+}
+
+TEST(DisplayTest, BorderlessLogicBranches) {
+    display::set_mode(800, 600, 0);
+    
+    display::borderless(1);
+    EXPECT_TRUE(display::borderless(-1));
+    
+    display::borderless(0);
+    EXPECT_FALSE(display::borderless(-1));
+}
+
+TEST(DisplayTest, RenderScaleQualityBranches) {
+    display::set_mode(800, 600, 0);
+    
+    // Testing the true branch
+    EXPECT_TRUE(display::set_render_scale_quality(true));
+    // Testing the false branch
+    EXPECT_TRUE(display::set_render_scale_quality(false));
+}
+
+TEST(DisplayTest, SetIconInvalidPath) {
+    display::set_mode(800, 600, 0);
+    // Should handle gracefully without crashing
+    display::set_icon("non_existent_file.png");
+    EXPECT_TRUE(true);
+}
+
+TEST(DisplayTest, DisplayGetters) {
+    display::set_mode(800, 600, 0);
+    EXPECT_NE(display::get_window(), nullptr);
+    EXPECT_NE(display::get_renderer(), nullptr);
+    auto& surf = display::get_surf();
+    EXPECT_EQ(surf.get_width(), 800);
+}
