@@ -158,6 +158,7 @@ public:
 
   void setMidRight(double _x, double _y);
   void setMidRight(const math::Vector2 &pos);
+  
   double getWidth() const;
   double getHeight() const;
   double getTop() const;
