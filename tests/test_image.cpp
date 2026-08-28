@@ -25,5 +25,26 @@ TEST(ImageTest, LoadWithValidPathStringCompiles) {
     sdlgame::init();
     sdlgame::display::set_mode(600,400);
     auto surf = sdlgame::image::load("assets/dummy.jpg");
+    EXPECT_NE(surf, nullptr);
+    EXPECT_NE(surf->getTexture(), nullptr);
+}
+
+TEST(ImageTest, LoadWithNullRendererDies) {
+    sdlgame::init();
+    sdlgame::display::set_mode(600, 400);
+    // Force renderer to be null to test error handling path
+    sdlgame::display::quit();
     
+    EXPECT_DEATH({
+        auto surf = sdlgame::image::load("assets/dummy.jpg");
+    }, ".*");
+}
+
+TEST(ImageTest, LoadWithEmptyPathDies) {
+    sdlgame::init();
+    sdlgame::display::set_mode(600, 400);
+    
+    EXPECT_DEATH({
+        auto surf = sdlgame::image::load("");
+    }, ".*");
 }
