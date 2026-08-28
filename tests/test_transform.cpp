@@ -1,4 +1,6 @@
 #include <gtest/gtest.h>
+#include "display.hpp"
+#include "engine.hpp"
 #include "transform.hpp"
 #include "surface.hpp"
 #include "math.hpp"
@@ -6,6 +8,8 @@
 using namespace sdlgame;
 
 TEST(TransformTest, FlipSurface) {
+    sdlgame::init();
+    sdlgame::display::set_mode(600,400);
     surface::Surface surf(100, 200);
     surface::Surface flipped = transform::flip(surf, true, false);
     
@@ -15,6 +19,8 @@ TEST(TransformTest, FlipSurface) {
 }
 
 TEST(TransformTest, ScaleSurface) {
+    sdlgame::init();
+    sdlgame::display::set_mode(600,400);
     surface::Surface surf(100, 200);
     math::Vector2 new_size(50, 50);
     surface::Surface scaled = transform::scale(surf, new_size);
@@ -26,6 +32,8 @@ TEST(TransformTest, ScaleSurface) {
 }
 
 TEST(TransformTest, ScaleBySurface) {
+    sdlgame::init();
+    sdlgame::display::set_mode(600,400);
     surface::Surface surf(100, 200);
     surface::Surface scaled = transform::scale_by(surf, 2.0);
     
@@ -35,6 +43,8 @@ TEST(TransformTest, ScaleBySurface) {
 }
 
 TEST(TransformTest, RotateSurface) {
+    sdlgame::init();
+    sdlgame::display::set_mode(600,400);
     surface::Surface surf(100, 200);
     math::Vector2 center(50, 100);
     surface::Surface rotated = transform::rotate(surf, 90.0, center);
