@@ -155,11 +155,6 @@ bool collide_circle(const T &left, const U &right) {
   const auto dx = left.get_rect().getCenterX() - right.get_rect().getCenterX();
   const auto dy = left.get_rect().getCenterY() - right.get_rect().getCenterY();
 
-  std::cerr << "lrad: " << lrad << " rrad: " << rrad << '\n';
-  std::cerr << "Sqr Dist: " << dx * dx + dy * dy << '\n';
-  std::cerr << "Sqr Rad: " << srad * srad << '\n';
-  std::cerr << "Res: " << (dx * dx + dy * dy < srad * srad) << '\n';
-
   return dx * dx + dy * dy < srad * srad;
 }
 
