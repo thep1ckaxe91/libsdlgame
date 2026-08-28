@@ -1,4 +1,7 @@
 #pragma once
+#include <concepts>
+#include <iostream>
+#include <type_traits>
 #ifndef SDLGAME_SPRITE_
 #define SDLGAME_SPRITE_
 #include "rect.hpp"
@@ -10,6 +13,22 @@
 // TODO: there are serveral ideas that might be helful in the future, includes:
 // + add with Container iterator begin and end with template
 // + more proper inheritance design
+
+// Note: the ownership relationship between Group and Sprite is that:
+// Group owns Sprites, Sprites "know" who own it
+
+template <typename T>
+concept Arithmetic = std::floating_point<T> || std::integral<T>;
+
+template <typename T>
+concept HasRadiusMember = requires(T t) {
+  requires Arithmetic<std::remove_cvref_t<decltype(t.radius)>>;
+};
+
+template <typename T>
+concept HasRadiusProperties = requires(T t) {
+  requires Arithmetic<std::remove_cvref_t<decltype(t.radius())>>;
+};
 
 namespace sdlgame::sprite {
 
@@ -30,6 +49,7 @@ public:
   bool has(const std::shared_ptr<Sprite> &sprite) const;
   virtual void update();
   virtual void draw(surface::Surface &surface);
+  void empty(); // remove all sprite
 
   auto begin() const;
   auto end() const;
@@ -72,7 +92,7 @@ public:
   rect::Rect &get_rect();
   const rect::Rect &get_rect() const;
 
-  const surface::Surface & get_image() const;
+  const surface::Surface &get_image() const;
 };
 
 /**
@@ -88,10 +108,10 @@ public:
 };
 
 /**
- * @return a list containing all Sprites in a Group that intersect with another
- * Sprite. Intersection is determined by comparing the Sprite.rect attribute of
- * each Sprite. The dokill argument is a bool. If set to True, all Sprites that
- * collide will be removed from the Group.
+ * @return a list containing all Sprites in a Group that intersect with
+ * another Sprite. Intersection is determined by comparing the `Sprite.rect`
+ * attribute of each Sprite. If the dokill` argument set to `True`, all
+ * Sprites that collide will be removed from the Group.
  */
 std::vector<std::shared_ptr<Sprite>>
 spritecollide(const std::shared_ptr<Sprite> &sprite,
@@ -111,8 +131,37 @@ bool collide_rect(const Sprite &left, const Sprite &right);
  * circle is created that is big enough to completely enclose the sprites rect
  * as given by the "rect" attribute.
  */
-bool collide_circle(const Sprite &left, const Sprite &right,
-                    double left_radius = 0, double right_radius = 0);
+template <typename T, typename U>
+  requires std::derived_from<T, Sprite> && std::derived_from<U, Sprite>
+bool collide_circle(const T &left, const U &right) {
+  double lrad{
+      left.get_rect().getTopLeft().distance_to(left.get_rect().getCenter())};
+  double rrad{
+      right.get_rect().getTopLeft().distance_to(right.get_rect().getCenter())};
+
+  if constexpr (requires { requires HasRadiusMember<T>; }) {
+    lrad = left.radius;
+  } else if constexpr (requires { requires HasRadiusProperties<T>; }) {
+    lrad = left.radius();
+  }
+  if constexpr (requires { requires HasRadiusMember<U>; }) {
+    rrad = right.radius;
+  } else if constexpr (requires { requires HasRadiusProperties<U>; }) {
+    rrad = right.radius();
+  }
+
+  const auto srad = lrad + rrad;
+
+  const auto dx = left.get_rect().getCenterX() - right.get_rect().getCenterX();
+  const auto dy = left.get_rect().getCenterY() - right.get_rect().getCenterY();
+
+  std::cerr << "lrad: " << lrad << " rrad: " << rrad << '\n';
+  std::cerr << "Sqr Dist: " << dx * dx + dy * dy << '\n';
+  std::cerr << "Sqr Rad: " << srad * srad << '\n';
+  std::cerr << "Res: " << (dx * dx + dy * dy < srad * srad) << '\n';
+
+  return dx * dx + dy * dy < srad * srad;
+}
 
 } // namespace sdlgame::sprite
 
