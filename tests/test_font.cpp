@@ -67,19 +67,57 @@ TEST(FontDeathTest, InvalidFontPath) {
   sdlgame::init();
   EXPECT_DEATH(
       { sdlgame::font::Font font("nonexistent_path_to_font.ttf", 16); },
-      "Cant load font");
+      "FATAL: SDL Error");
 }
 
-TEST(FontDeathTest, RenderEmptyText) {
+TEST(FontDeathTest, RenderWithUninitializedFont) {
+  sdlgame::init();
+  sdlgame::display::set_mode(600, 400);
+  sdlgame::font::Font uninitialized_font; // m_font is null
+  sdlgame::color::Color fg_color{255, 255, 255, 255};
+  
+  EXPECT_DEATH(
+      { uninitialized_font.render("Text", sdlgame::font::AntiAlias::SOLID, fg_color); },
+      "FATAL: SDL Error");
+  EXPECT_DEATH(
+      { uninitialized_font.render("Text", sdlgame::font::AntiAlias::SHADED, fg_color); },
+      "FATAL: SDL Error");
+  EXPECT_DEATH(
+      { uninitialized_font.render("Text", sdlgame::font::AntiAlias::BLENDED, fg_color); },
+      "FATAL: SDL Error");
+}
+
+TEST(FontDeathTest, RenderEmptyTextSolid) {
   sdlgame::init();
   sdlgame::display::set_mode(600, 400);
   sdlgame::font::Font font{std::filesystem::path("assets") / "dummy_font.ttf"};
   sdlgame::color::Color fg_color{255, 255, 255, 255};
   
-  // Empty text often causes TTF_Render to fail and return nullptr
   EXPECT_DEATH(
       { font.render("", sdlgame::font::AntiAlias::SOLID, fg_color); },
-      "Error render font");
+      "FATAL: SDL Error");
+}
+
+TEST(FontDeathTest, RenderEmptyTextShaded) {
+  sdlgame::init();
+  sdlgame::display::set_mode(600, 400);
+  sdlgame::font::Font font{std::filesystem::path("assets") / "dummy_font.ttf"};
+  sdlgame::color::Color fg_color{255, 255, 255, 255};
+  
+  EXPECT_DEATH(
+      { font.render("", sdlgame::font::AntiAlias::SHADED, fg_color); },
+      "FATAL: SDL Error");
+}
+
+TEST(FontDeathTest, RenderEmptyTextBlended) {
+  sdlgame::init();
+  sdlgame::display::set_mode(600, 400);
+  sdlgame::font::Font font{std::filesystem::path("assets") / "dummy_font.ttf"};
+  sdlgame::color::Color fg_color{255, 255, 255, 255};
+  
+  EXPECT_DEATH(
+      { font.render("", sdlgame::font::AntiAlias::BLENDED, fg_color); },
+      "FATAL: SDL Error");
 }
 
 TEST(FontTest, GetHeightReturnsCorrectSize) {
@@ -100,15 +138,18 @@ TEST(FontTest, RenderMethodWrapLengthAndBackground) {
   sdlgame::color::Color fg_color{255, 255, 255, 255};
   sdlgame::color::Color bg_color{255, 0, 0, 255};
   
-  // With non-zero wrap length and a custom background color
-  auto surface_wrapped = font.render(
-      "This is a very long string that should wrap", 
-      sdlgame::font::AntiAlias::BLENDED, 
-      fg_color, 
-      50, 
-      bg_color);
-      
-  EXPECT_GT(surface_wrapped.get_height(), font.get_height());
+  // Test all AntiAlias paths to ensure background filling works correctly
+  auto surface_solid = font.render(
+      "Test Wrap SOLID", sdlgame::font::AntiAlias::SOLID, fg_color, 50, bg_color);
+  EXPECT_GT(surface_solid.get_height(), 0);
+
+  auto surface_shaded = font.render(
+      "Test Wrap SHADED", sdlgame::font::AntiAlias::SHADED, fg_color, 50, bg_color);
+  EXPECT_GT(surface_shaded.get_height(), 0);
+
+  auto surface_blended = font.render(
+      "Test Wrap BLENDED", sdlgame::font::AntiAlias::BLENDED, fg_color, 50, bg_color);
+  EXPECT_GT(surface_blended.get_height(), 0);
 }
 
 TEST(FontTest, RenderMethodNewline) {

@@ -40,18 +40,18 @@ TEST(MusicTest, PlaybackState) {
     EXPECT_FALSE(sdlgame::music::is_playing());
 }
 
-TEST(MusicTest, Duration) {
+TEST(MusicTest, DurationError) {
     sdlgame::mixer::init();
-    double dur = 0.0;
-    EXPECT_NO_THROW({
-        dur = sdlgame::music::duration();
-    });
-    
-    EXPECT_EQ(dur, -1);
+    EXPECT_DEATH({
+        sdlgame::music::duration();
+    }, "Failing Expression: Mix_MusicDuration");
+}
 
+TEST(MusicTest, DurationLoaded) {
+    sdlgame::mixer::init();
     sdlgame::music::load(fs::path{"assets/dummy.mp3"});
 
-    dur = sdlgame::music::duration();
+    double dur = sdlgame::music::duration();
     EXPECT_GE(dur, 0.1);
 }
 
@@ -78,7 +78,7 @@ TEST(MusicTest, LoadDeathTest) {
     // Test branch where Mix_LoadMUS fails and triggers std::terminate
     EXPECT_DEATH({
         sdlgame::music::load(fs::path{"invalid_non_existent_music_file.mp3"});
-    }, "Cant load music");
+    }, "Failing to Create Resource at: Mix_LoadMUS");
 }
 
 TEST(MusicTest, PlaybackStateWithLoadedMusic) {
@@ -91,4 +91,19 @@ TEST(MusicTest, PlaybackStateWithLoadedMusic) {
         sdlgame::music::resume();
         sdlgame::music::stop();
     });
+}
+
+TEST(MusicTest, PlayError) {
+    sdlgame::mixer::init();
+    sdlgame::music::load(fs::path{"assets/dummy.mp3"});
+    
+    // Force an error in Mix_FadeInMusic by closing audio
+    Mix_CloseAudio(); 
+    
+    EXPECT_DEATH({
+        sdlgame::music::play(1, 100);
+    }, "Failing Expression: Mix_FadeInMusic");
+    
+    // Re-initialize audio so subsequent tests don't break if test order changes
+    sdlgame::mixer::init();
 }

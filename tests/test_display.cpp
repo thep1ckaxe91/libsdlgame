@@ -72,33 +72,77 @@ TEST(DisplayDeathTest, UninitializedDisplayHeight) {
 }
 
 TEST(DisplayTest, SetModeDesktopFallback) {
-    display::set_mode(0, 0, 0);
+    // Testing logic branch where width=0, height=0 uses desktop display mode
+    display::set_mode();
+    EXPECT_GT(display::get_width(), 0.0);
+    EXPECT_GT(display::get_height(), 0.0);
+
+    // Testing logic branch where only height=0 uses desktop display mode
+    display::set_mode(800, 0);
+    EXPECT_GT(display::get_width(), 0.0);
+    EXPECT_GT(display::get_height(), 0.0);
+    
+    // Testing logic branch where only width=0 uses desktop display mode
+    display::set_mode(0, 600);
     EXPECT_GT(display::get_width(), 0.0);
     EXPECT_GT(display::get_height(), 0.0);
 }
 
+TEST(DisplayDeathTest, SetModeInvalidSize) {
+    // Passing extremely large/invalid dimensions should cause SDL_CreateWindow or SDL_CreateRenderer to fail,
+    // which triggers SDL_NEW macro's termination
+    EXPECT_DEATH(display::set_mode(-1000, -1000, 0), "FATAL: SDL Error");
+}
+
 TEST(DisplayTest, GrabLogicBranches) {
-    display::set_mode(800, 600, 0);
+    display::set_mode();
     
     display::grab(1);
-    EXPECT_TRUE(display::grab(-1));
+    EXPECT_TRUE(display::grab());
     
     display::grab(0);
-    EXPECT_FALSE(display::grab(-1));
+    EXPECT_FALSE(display::grab());
 }
 
 TEST(DisplayTest, BorderlessLogicBranches) {
-    display::set_mode(800, 600, 0);
+    display::set_mode();
     
     display::borderless(1);
-    EXPECT_TRUE(display::borderless(-1));
+    EXPECT_TRUE(display::borderless());
     
     display::borderless(0);
-    EXPECT_FALSE(display::borderless(-1));
+    EXPECT_FALSE(display::borderless());
+}
+
+TEST(DisplayTest, FullscreenLogicBranches) {
+    display::set_mode(800, 600);
+    
+    display::fullscreen();
+    EXPECT_TRUE(display::is_fullscreen());
+    
+    display::restore();
+    EXPECT_FALSE(display::is_fullscreen());
+
+    display::fullscreen_desktop();
+    EXPECT_TRUE(display::is_fullscreen());
+    
+    display::restore();
+    EXPECT_FALSE(display::is_fullscreen());
+}
+
+TEST(DisplayTest, GetWindowSizeSideEffect) {
+    display::set_mode(800, 600);
+    display::set_window_size(1024, 768);
+    
+    // get_window_size updates the internal proxy_surf resolution
+    display::get_window_size();
+    
+    EXPECT_EQ(display::get_width(), 1024);
+    EXPECT_EQ(display::get_height(), 768);
 }
 
 TEST(DisplayTest, RenderScaleQualityBranches) {
-    display::set_mode(800, 600, 0);
+    display::set_mode(800, 600);
     
     // Testing the true branch
     EXPECT_TRUE(display::set_render_scale_quality(true));
@@ -106,15 +150,14 @@ TEST(DisplayTest, RenderScaleQualityBranches) {
     EXPECT_TRUE(display::set_render_scale_quality(false));
 }
 
-TEST(DisplayTest, SetIconInvalidPath) {
-    display::set_mode(800, 600, 0);
-    // Should handle gracefully without crashing
-    display::set_icon("non_existent_file.png");
-    EXPECT_TRUE(true);
+TEST(DisplayDeathTest, SetIconInvalidPath) {
+    display::set_mode(800, 600);
+    // Now uses SDL_NEW, so it should terminate if the path is invalid
+    EXPECT_DEATH(display::set_icon("non_existent_file.png"), "FATAL: SDL Error");
 }
 
 TEST(DisplayTest, DisplayGetters) {
-    display::set_mode(800, 600, 0);
+    display::set_mode(800, 600);
     EXPECT_NE(display::get_window(), nullptr);
     EXPECT_NE(display::get_renderer(), nullptr);
     auto& surf = display::get_surf();

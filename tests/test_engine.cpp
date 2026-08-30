@@ -47,13 +47,13 @@ TEST(EngineTest, InitPrintsSuccessMessage) {
 
 TEST(EngineDeathTest, InitFailsAndTerminates) {
     // Force SDL_Init to fail by setting invalid driver environment variables.
-    // This covers the error handling path (SDL_Init != 0) which prints to stderr and calls std::terminate().
-    // We run it in a death test to safely catch the termination (and modifying env vars here is safe as EXPECT_DEATH forks).
+    // This covers the error handling path which prints to stderr and calls std::terminate().
+    // We run it in a death test to safely catch the termination.
     EXPECT_DEATH({
         setenv("SDL_VIDEODRIVER", "invalid_driver_name_to_force_failure", 1);
         setenv("SDL_AUDIODRIVER", "invalid_driver_name_to_force_failure", 1);
         sdlgame::init();
-    }, "Error initializing SDL");
+    }, "FATAL: SDL Error at .*engine.cpp:.*\nFailing Expression: SDL_Init\\(SDL_INIT_EVERYTHING\\)");
 }
 
 TEST(EngineTest, GetBasePathCachedResult) {
@@ -64,4 +64,31 @@ TEST(EngineTest, GetBasePathCachedResult) {
     std::filesystem::path path2 = sdlgame::get_base_path();
     
     EXPECT_EQ(path1, path2);
+}
+
+// ---------------------------------------------------------
+// White-box tests for error handling macros internals
+// ---------------------------------------------------------
+
+TEST(EngineDeathTest, CheckSdlPtrTerminatesOnNull) {
+    EXPECT_DEATH({
+        sdlgame::internal::check_sdl_ptr<void*>(nullptr, "test_expr_ptr", "test_file.cpp", 42);
+    }, "FATAL: SDL Error at test_file.cpp:42\nFailing to Create Resource at: test_expr_ptr");
+}
+
+TEST(EngineDeathTest, CheckSdlTerminatesOnNegative) {
+    EXPECT_DEATH({
+        sdlgame::internal::check_sdl(-1, "test_expr_val", "test_file.cpp", 42);
+    }, "FATAL: SDL Error at test_file.cpp:42\nFailing Expression: test_expr_val");
+}
+
+TEST(EngineTest, CheckSdlPtrReturnsValidPointer) {
+    int dummy = 0;
+    int* ptr = &dummy;
+    EXPECT_EQ(ptr, sdlgame::internal::check_sdl_ptr(ptr, "test_expr_ptr", "test_file.cpp", 42));
+}
+
+TEST(EngineTest, CheckSdlReturnsNonNegative) {
+    EXPECT_EQ(0, sdlgame::internal::check_sdl(0, "test_expr_val", "test_file.cpp", 42));
+    EXPECT_EQ(1, sdlgame::internal::check_sdl(1, "test_expr_val", "test_file.cpp", 42));
 }

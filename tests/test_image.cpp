@@ -4,7 +4,6 @@
 #include <filesystem>
 #include "engine.hpp"
 
-
 TEST(ImageTest, InitDoesNotThrow) {
     EXPECT_NO_THROW({
         sdlgame::image::init();
@@ -17,16 +16,16 @@ TEST(ImageTest, LoadNonExistentPathReturnsNullOrThrows) {
     using namespace sdlgame;
 
     std::filesystem::path fakePath = "fake/path.png";
-    std::shared_ptr<const surface::Surface> surf;
-    EXPECT_DEATH(surf = sdlgame::image::load(fakePath);, "");
+    EXPECT_DEATH({
+        auto surf = sdlgame::image::load(fakePath);
+    }, ".*FATAL: SDL Error.*");
 }
 
 TEST(ImageTest, LoadWithValidPathStringCompiles) {
     sdlgame::init();
     sdlgame::display::set_mode(600,400);
     auto surf = sdlgame::image::load("assets/dummy.jpg");
-    EXPECT_NE(surf, nullptr);
-    EXPECT_NE(surf->getTexture(), nullptr);
+    EXPECT_NE(surf.getTexture(), nullptr);
 }
 
 TEST(ImageTest, LoadWithNullRendererDies) {
@@ -37,7 +36,7 @@ TEST(ImageTest, LoadWithNullRendererDies) {
     
     EXPECT_DEATH({
         auto surf = sdlgame::image::load("assets/dummy.jpg");
-    }, ".*");
+    }, ".*FATAL: SDL Error.*");
 }
 
 TEST(ImageTest, LoadWithEmptyPathDies) {
@@ -46,5 +45,24 @@ TEST(ImageTest, LoadWithEmptyPathDies) {
     
     EXPECT_DEATH({
         auto surf = sdlgame::image::load("");
-    }, ".*");
+    }, ".*FATAL: SDL Error.*");
 }
+
+TEST(ImageTest, DoubleInitDoesNotThrow) {
+    EXPECT_NO_THROW({
+        sdlgame::image::init();
+        sdlgame::image::init();
+    });
+}
+
+TEST(ImageTest, LoadMultipleTimesSameImage) {
+    sdlgame::init();
+    sdlgame::display::set_mode(600,400);
+    auto surf1 = sdlgame::image::load("assets/dummy.jpg");
+    EXPECT_NE(surf1.getTexture(), nullptr);
+    
+    auto surf2 = sdlgame::image::load("assets/dummy.jpg");
+    EXPECT_NE(surf2.getTexture(), nullptr);
+    EXPECT_NE(surf1.getTexture(), surf2.getTexture());
+}
+

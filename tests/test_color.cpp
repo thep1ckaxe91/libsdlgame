@@ -28,6 +28,33 @@ TEST(ColorTest, ConstructorsAndProperties) {
     EXPECT_EQ(named_color.a, 255);
 }
 
+TEST(ColorTest, TemplateConstructors) {
+    // White-box test for template constructors using types convertible to uint8_t
+    char r_val = 10;
+    short g_val = 20;
+    int b_val = 30;
+    long a_val = 40;
+    
+    Color c_mixed(r_val, g_val, b_val, a_val);
+    EXPECT_EQ(c_mixed.r, 10);
+    EXPECT_EQ(c_mixed.g, 20);
+    EXPECT_EQ(c_mixed.b, 30);
+    EXPECT_EQ(c_mixed.a, 40);
+
+    Color c_mixed_3(r_val, g_val, b_val);
+    EXPECT_EQ(c_mixed_3.r, 10);
+    EXPECT_EQ(c_mixed_3.g, 20);
+    EXPECT_EQ(c_mixed_3.b, 30);
+    EXPECT_EQ(c_mixed_3.a, 255);
+
+    // Testing constexpr evaluation
+    constexpr Color c_constexpr(1, 2, 3, 255);
+    static_assert(c_constexpr.r == 1 && c_constexpr.g == 2 && c_constexpr.b == 3 && c_constexpr.a == 255);
+    
+    constexpr Color c_constexpr4(4, 5, 6, 7);
+    static_assert(c_constexpr4.r == 4 && c_constexpr4.g == 5 && c_constexpr4.b == 6 && c_constexpr4.a == 7);
+}
+
 TEST(ColorTest, StringConstructorLogic) {
     // Mixed case handling
     Color mixed_red("ReD");
@@ -50,8 +77,22 @@ TEST(ColorTest, StringConstructorLogic) {
     EXPECT_EQ(empty_color.b, 0);
     EXPECT_EQ(empty_color.a, 0);
     
-    // Death test for unknown color
+    // Exact match for edge elements in __named_color array
+    Color first_color("alice blue");
+    EXPECT_EQ(first_color.r, 240);
+    EXPECT_EQ(first_color.g, 248);
+    EXPECT_EQ(first_color.b, 255);
+
+    Color last_color("yellow green");
+    EXPECT_EQ(last_color.r, 154);
+    EXPECT_EQ(last_color.g, 205);
+    EXPECT_EQ(last_color.b, 50);
+
+    // Death tests for unknown colors, exploring lower_bound edge cases
     EXPECT_DEATH(Color("unknown_color_name"), "Unrecognize color identifier: unknown_color_name");
+    EXPECT_DEATH(Color("a"), "Unrecognize color identifier: a"); // Before "alice blue"
+    EXPECT_DEATH(Color("z"), "Unrecognize color identifier: z"); // After "yellow green"
+    EXPECT_DEATH(Color("alica blue"), "Unrecognize color identifier: alica blue"); // Close mismatch
 }
 
 TEST(ColorTest, MemberFunctions) {
@@ -63,9 +104,17 @@ TEST(ColorTest, MemberFunctions) {
     EXPECT_EQ(sdl_c.b, 30);
     EXPECT_EQ(sdl_c.a, 40);
     
+    // Default format RGBA32
     uint32_t uint_c = c.toUint32Color();
-    // Verify it returns expected SDL mapped format
     EXPECT_NE(uint_c, 0u);
+    
+    // Testing specific format considering surface.hpp might use different optimal_format()
+    uint32_t argb_c = c.toUint32Color(SDL_PIXELFORMAT_ARGB8888);
+    EXPECT_NE(argb_c, 0u);
+    EXPECT_NE(argb_c, uint_c); // ARGB8888 will likely have a different int value than RGBA32
+    
+    // White-box test for SDL_NEW error handling on SDL_AllocFormat
+    EXPECT_DEATH(c.toUint32Color(SDL_PIXELFORMAT_UNKNOWN), "Failing to Create Resource at: SDL_AllocFormat");
     
     std::string str_c = c.toString();
     EXPECT_EQ(str_c, "Color(10,20,30,40)");
@@ -111,4 +160,3 @@ TEST(ColorTest, Operators) {
     EXPECT_EQ(inv_res.b, 255 - 200);
     EXPECT_EQ(inv_res.a, 250); // Alpha does not get inverted
 }
-

@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include "random.hpp"
+#include <limits>
 
 TEST(RandomTest, RandIntNormalRange) {
     int val = sdlgame::random::randint(1, 10);
@@ -61,3 +62,65 @@ TEST(RandomTest, RandFMultipleValues) {
     }
     EXPECT_TRUE(different);
 }
+
+TEST(RandomTest, RandIntExtremeRange) {
+    int val = sdlgame::random::randint(std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
+    EXPECT_GE(val, std::numeric_limits<int>::min());
+    EXPECT_LE(val, std::numeric_limits<int>::max());
+}
+
+TEST(RandomTest, RandIntReversedExtremeRange) {
+    int val = sdlgame::random::randint(std::numeric_limits<int>::max(), std::numeric_limits<int>::min());
+    EXPECT_GE(val, std::numeric_limits<int>::min());
+    EXPECT_LE(val, std::numeric_limits<int>::max());
+}
+
+TEST(RandomTest, RandIntZeros) {
+    int val = sdlgame::random::randint(0, 0);
+    EXPECT_EQ(val, 0);
+}
+
+TEST(RandomTest, RandFLimitsThorough) {
+    for (int i = 0; i < 10000; ++i) {
+        float val = sdlgame::random::randf();
+        EXPECT_GE(val, 0.0f);
+        EXPECT_LE(val, 1.0f);
+    }
+}
+
+TEST(RandomTest, RandIntCrossZeroRange) {
+    bool found_neg = false;
+    bool found_pos = false;
+    bool found_zero = false;
+    for (int i = 0; i < 1000; ++i) {
+        int val = sdlgame::random::randint(-1, 1);
+        if (val < 0) found_neg = true;
+        if (val > 0) found_pos = true;
+        if (val == 0) found_zero = true;
+        if (found_neg && found_pos && found_zero) break;
+    }
+    EXPECT_TRUE(found_neg);
+    EXPECT_TRUE(found_pos);
+    EXPECT_TRUE(found_zero);
+}
+
+TEST(RandomTest, RandIntDistribution) {
+    const int num_samples = 10000;
+    long long sum = 0;
+    for (int i = 0; i < num_samples; ++i) {
+        sum += sdlgame::random::randint(1, 10);
+    }
+    double mean = static_cast<double>(sum) / num_samples;
+    EXPECT_NEAR(mean, 5.5, 0.5);
+}
+
+TEST(RandomTest, RandFDistribution) {
+    const int num_samples = 10000;
+    double sum = 0;
+    for (int i = 0; i < num_samples; ++i) {
+        sum += sdlgame::random::randf();
+    }
+    double mean = sum / num_samples;
+    EXPECT_NEAR(mean, 0.5, 0.05);
+}
+

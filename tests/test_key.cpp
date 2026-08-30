@@ -1,8 +1,7 @@
 #include <gtest/gtest.h>
+#include <SDL2/SDL.h>
 #include "engine.hpp"
 #include "key.hpp"
-
-
 
 TEST(KeyDeathTest, GetPressedWithoutInit) {
     // White-box test: Tests the internal assert in get_pressed() when keyState is null.
@@ -10,8 +9,18 @@ TEST(KeyDeathTest, GetPressedWithoutInit) {
 #ifndef NDEBUG
     EXPECT_DEATH({
         sdlgame::key::get_pressed();
-    }, "init\\(\\) was never called");
+    }, "sdlgame::key::init\\(\\) was never called");
 #endif
+}
+
+TEST(KeyDeathTest, InitWithoutSDL) {
+    // White-box test: Tests the internal check in init() when keyState is null.
+    // Death tests run in a forked process. 
+    // Without sdlgame::init() or by explicitly quitting SDL, SDL_GetKeyboardState returns nullptr.
+    EXPECT_DEATH({
+        SDL_Quit(); // Ensure SDL is fully uninitialized to force nullptr
+        sdlgame::key::init();
+    }, "FATAL: SDL Error.*Failing to Create Resource at: SDL_GetKeyboardState\\(&numKeys\\)");
 }
 
 TEST(KeyTest, InitCallable) {
@@ -39,12 +48,11 @@ TEST(KeyTest, GetPressedReturnsSpan) {
     sdlgame::key::init();
     // Tests that get_pressed() returns a valid span (could be empty or not, depending on state)
     EXPECT_NO_THROW({
-        auto pressed_keys = sdlgame::key::get_pressed();
+        std::span<const uint8_t> pressed_keys = sdlgame::key::get_pressed();
         
         // Ensure that we can access the span properties
-        size_t size = pressed_keys.size();
-        if (size > 0) {
-            auto first_element = pressed_keys[0];
+        if (!pressed_keys.empty()) {
+            auto first_element = pressed_keys.front();
             (void)first_element;
         }
     });
@@ -55,7 +63,7 @@ TEST(KeyTest, GetPressedHasValidSize) {
     // After initialization, numKeys (and thus span size) should be > 0.
     sdlgame::init();
     sdlgame::key::init();
-    auto pressed_keys = sdlgame::key::get_pressed();
+    std::span<const uint8_t> pressed_keys = sdlgame::key::get_pressed();
     EXPECT_GT(pressed_keys.size(), 0) << "Expected internal numKeys to be updated to a positive value.";
 }
 
@@ -63,13 +71,21 @@ TEST(KeyTest, GetPressedSpanBoundary) {
     // White-box test: Check loop/access boundaries of the internal span.
     sdlgame::init();
     sdlgame::key::init();
-    auto pressed_keys = sdlgame::key::get_pressed();
+    std::span<const uint8_t> pressed_keys = sdlgame::key::get_pressed();
     
     // Ensure we can safely access the very last element without out-of-bounds fault
-    if (pressed_keys.size() > 0) {
+    if (!pressed_keys.empty()) {
         EXPECT_NO_THROW({
-            volatile uint8_t last_key = pressed_keys[pressed_keys.size() - 1];
+            volatile uint8_t last_key = pressed_keys.back();
             (void)last_key;
         });
     }
+}
+
+TEST(KeyTest, GetPressedDataNotNull) {
+    // White-box test: verifies the internal keyState pointer is non-null after init
+    sdlgame::init();
+    sdlgame::key::init();
+    std::span<const uint8_t> pressed_keys = sdlgame::key::get_pressed();
+    EXPECT_NE(pressed_keys.data(), nullptr) << "keyState pointer should not be null after init()";
 }

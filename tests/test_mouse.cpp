@@ -5,12 +5,20 @@
 #include <SDL2/SDL.h>
 
 TEST(MouseTest, GetPos) {
+    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+        GTEST_SKIP() << "Failed to initialize SDL Video";
+    }
+    sdlgame::display::set_mode(800, 600);
+    
     sdlgame::math::Vector2 pos = sdlgame::mouse::get_pos();
+    
+    sdlgame::display::quit();
+    SDL_QuitSubSystem(SDL_INIT_VIDEO);
     SUCCEED();
 }
 
 TEST(MouseTest, GetPressed) {
-    auto pressed = sdlgame::mouse::get_pressed();
+    std::span<const bool, 5> pressed = sdlgame::mouse::get_pressed();
     EXPECT_EQ(pressed.size(), 5);
 }
 
@@ -31,11 +39,12 @@ TEST(MouseTest, Visibility) {
 
 // === NEW WHITE-BOX TESTS ===
 
-TEST(MouseTest, GetPressed_StaticArray_SameReference) {
+TEST(MouseTest, GetPressed_ReturnsSpanToStaticArray) {
     // get_pressed returns a span to a static array internally. 
     // Two consecutive calls must return a span covering the exact same memory address.
-    auto pressed1 = sdlgame::mouse::get_pressed();
-    auto pressed2 = sdlgame::mouse::get_pressed();
+    std::span<const bool, 5> pressed1 = sdlgame::mouse::get_pressed();
+    std::span<const bool, 5> pressed2 = sdlgame::mouse::get_pressed();
+    
     EXPECT_EQ(pressed1.data(), pressed2.data());
     EXPECT_EQ(pressed1.size(), 5);
 }
@@ -117,13 +126,12 @@ TEST(MouseTest, GetPos_WithoutRendererEdgeCase) {
     // Ensure display is shut down
     sdlgame::display::quit();
     
-    // When there's no renderer, SDL_RenderWindowToLogical will fail or do nothing.
+    // When there's no renderer, SDL_RenderWindowToLogical will fail.
     // logicalX and logicalY in get_pos() will be uninitialized.
-    // We just cover the path to ensure it doesn't crash (UB might happen, but usually just returns garbage).
-    // In whitebox testing, we identify this edge case.
-    sdlgame::math::Vector2 pos = sdlgame::mouse::get_pos();
-    // Verify it doesn't crash
-    SUCCEED();
+    // With SDL_CHECK, this path now causes termination.
+    EXPECT_DEATH({
+        sdlgame::mouse::get_pos();
+    }, "FATAL: SDL Error");
 }
 
 TEST(MouseTest, GetPressed_SimulateState) {
@@ -135,7 +143,7 @@ TEST(MouseTest, GetPressed_SimulateState) {
     sdlgame::display::set_mode(800, 600);
     SDL_PumpEvents();
     
-    auto pressed = sdlgame::mouse::get_pressed();
+    std::span<const bool, 5> pressed = sdlgame::mouse::get_pressed();
     EXPECT_EQ(pressed.size(), 5);
     
     sdlgame::display::quit();

@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 #include "rect.hpp"
+#include <cmath>
+
 
 TEST(RectTest, BasicInitialization) {
     sdlgame::rect::Rect r(10.0, 20.0, 30.0, 40.0);
@@ -145,4 +147,249 @@ TEST(RectTest, ToSDLRect) {
     EXPECT_EQ(irect.y, 20);
     EXPECT_EQ(irect.w, 30);
     EXPECT_EQ(irect.h, 40);
+}
+
+// --- WHITE-BOX TESTS ---
+
+TEST(RectWhiteBoxTest, CliplineParallelInside) {
+    sdlgame::rect::Rect r(10.0, 10.0, 80.0, 80.0);
+    // Line parallel to y-axis (vertical) and completely inside x boundaries
+    auto res = r.clipline(sdlgame::math::Vector2(20.0, 5.0), sdlgame::math::Vector2(20.0, 95.0));
+    ASSERT_TRUE(res.has_value());
+    EXPECT_DOUBLE_EQ(res->first.x, 20.0);
+    EXPECT_DOUBLE_EQ(res->first.y, 10.0);
+    EXPECT_DOUBLE_EQ(res->second.x, 20.0);
+    EXPECT_DOUBLE_EQ(res->second.y, 90.0);
+}
+
+TEST(RectWhiteBoxTest, ConstructorsAndUpdates) {
+    sdlgame::math::Vector2 pos(5.0, 15.0);
+    sdlgame::math::Vector2 size(25.0, 35.0);
+
+    sdlgame::rect::Rect r1(5.0, 15.0, size);
+    EXPECT_DOUBLE_EQ(r1.getLeft(), 5.0);
+    EXPECT_DOUBLE_EQ(r1.getWidth(), 25.0);
+
+    sdlgame::rect::Rect r2(pos, 25.0, 35.0);
+    EXPECT_DOUBLE_EQ(r2.getTop(), 15.0);
+
+    sdlgame::rect::Rect r3(pos, size);
+    EXPECT_TRUE(r1 == r3);
+
+    r3.update(1.0, 2.0, 3.0, 4.0);
+    EXPECT_DOUBLE_EQ(r3.getLeft(), 1.0);
+
+    r3.update(2.0, 3.0, size);
+    EXPECT_DOUBLE_EQ(r3.getLeft(), 2.0);
+
+    r3.update(pos, 4.0, 5.0);
+    EXPECT_DOUBLE_EQ(r3.getTop(), 15.0);
+
+    r3.update(pos, size);
+    EXPECT_TRUE(r1 == r3);
+}
+
+TEST(RectWhiteBoxTest, ToString) {
+    sdlgame::rect::Rect r(1.0, 2.0, 3.0, 4.0);
+    std::string s = r.toString();
+    EXPECT_NE(s.find("Rect<"), std::string::npos);
+}
+
+TEST(RectWhiteBoxTest, MoveAndInflateVector2) {
+    sdlgame::rect::Rect r(0.0, 0.0, 10.0, 10.0);
+    sdlgame::math::Vector2 offset(5.0, 5.0);
+    
+    sdlgame::rect::Rect moved = r.move(offset);
+    EXPECT_DOUBLE_EQ(moved.getLeft(), 5.0);
+    
+    r.move_ip(offset);
+    EXPECT_DOUBLE_EQ(r.getLeft(), 5.0);
+
+    sdlgame::rect::Rect inflated = r.inflate(offset);
+    EXPECT_DOUBLE_EQ(inflated.getWidth(), 15.0);
+    
+    r.inflate_ip(offset);
+    EXPECT_DOUBLE_EQ(r.getWidth(), 15.0);
+}
+
+TEST(RectWhiteBoxTest, FitEdgeCases) {
+    sdlgame::rect::Rect r(0.0, 0.0, 50.0, 50.0);
+    sdlgame::rect::Rect oth(10.0, 10.0, 0.0, 0.0); // zero width/height
+
+    sdlgame::rect::Rect fit_rect = r.fit(oth);
+    EXPECT_DOUBLE_EQ(fit_rect.getWidth(), 0.0);
+    EXPECT_DOUBLE_EQ(fit_rect.getHeight(), 0.0);
+
+    sdlgame::rect::Rect r_zero(0.0, 0.0, 0.0, 0.0);
+    sdlgame::rect::Rect oth_normal(10.0, 10.0, 20.0, 20.0);
+    sdlgame::rect::Rect fit_zero = r_zero.fit(oth_normal);
+    EXPECT_TRUE(std::isnan(fit_zero.getWidth()) || std::isinf(fit_zero.getWidth()) || fit_zero.getWidth() == 0.0);
+}
+
+TEST(RectWhiteBoxTest, ContainsEdgeCases) {
+    sdlgame::rect::Rect r(0.0, 0.0, 100.0, 100.0);
+    EXPECT_TRUE(r.contains(r));
+    
+    sdlgame::rect::Rect partial(50.0, 50.0, 100.0, 100.0);
+    EXPECT_FALSE(r.contains(partial));
+    
+    sdlgame::rect::Rect outside(-50.0, -50.0, 10.0, 10.0);
+    EXPECT_FALSE(r.contains(outside));
+}
+
+TEST(RectWhiteBoxTest, CollidePointVector2) {
+    sdlgame::rect::Rect r(10.0, 10.0, 40.0, 40.0);
+    EXPECT_TRUE(r.collidepoint(sdlgame::math::Vector2(20.0, 20.0)));
+    EXPECT_FALSE(r.collidepoint(sdlgame::math::Vector2(0.0, 0.0)));
+}
+
+TEST(RectWhiteBoxTest, CollideListEmpty) {
+    sdlgame::rect::Rect r(10.0, 10.0, 40.0, 40.0);
+    std::vector<sdlgame::rect::Rect> empty_list;
+    EXPECT_FALSE(r.collidelist(empty_list));
+}
+
+TEST(RectWhiteBoxTest, OverlapIP) {
+    sdlgame::rect::Rect r1(0.0, 0.0, 100.0, 100.0);
+    sdlgame::rect::Rect r2(50.0, 50.0, 100.0, 100.0);
+    r1.overlap_ip(r2);
+    EXPECT_DOUBLE_EQ(r1.getLeft(), 50.0);
+    EXPECT_DOUBLE_EQ(r1.getWidth(), 50.0);
+}
+
+TEST(RectWhiteBoxTest, GetterSetterConsistency) {
+    sdlgame::rect::Rect r(10.0, 20.0, 30.0, 40.0);
+    
+    EXPECT_DOUBLE_EQ(r.getSize().x, r.getWidth());
+    EXPECT_DOUBLE_EQ(r.getSize().y, r.getHeight());
+    
+    EXPECT_DOUBLE_EQ(r.getCenter().x, r.getCenterX());
+    EXPECT_DOUBLE_EQ(r.getCenter().y, r.getCenterY());
+    
+    EXPECT_DOUBLE_EQ(r.getTopLeft().x, r.getLeft());
+    EXPECT_DOUBLE_EQ(r.getTopLeft().y, r.getTop());
+    
+    r.setTopLeft(sdlgame::math::Vector2(0.0, 0.0));
+    EXPECT_DOUBLE_EQ(r.getLeft(), 0.0);
+    EXPECT_DOUBLE_EQ(r.getTop(), 0.0);
+    
+    r.setBottomRight(sdlgame::math::Vector2(100.0, 100.0));
+    EXPECT_DOUBLE_EQ(r.getRight(), 100.0);
+    EXPECT_DOUBLE_EQ(r.getBottom(), 100.0);
+    
+    r.setCenter(sdlgame::math::Vector2(50.0, 50.0));
+    EXPECT_DOUBLE_EQ(r.getCenterX(), 50.0);
+    EXPECT_DOUBLE_EQ(r.getCenterY(), 50.0);
+    
+    r.setMidTop(sdlgame::math::Vector2(50.0, 10.0));
+    EXPECT_DOUBLE_EQ(r.getTop(), 10.0);
+    
+    r.setMidBottom(sdlgame::math::Vector2(50.0, 90.0));
+    EXPECT_DOUBLE_EQ(r.getBottom(), 90.0);
+    
+    r.setMidLeft(sdlgame::math::Vector2(10.0, 50.0));
+    EXPECT_DOUBLE_EQ(r.getLeft(), 10.0);
+    
+    r.setMidRight(sdlgame::math::Vector2(90.0, 50.0));
+    EXPECT_DOUBLE_EQ(r.getRight(), 90.0);
+}
+
+TEST(RectWhiteBoxTest, CliplineEdgeCases) {
+    sdlgame::rect::Rect r(10.0, 10.0, 80.0, 80.0);
+    
+    // Horizontal line inside
+    auto res_horiz = r.clipline(sdlgame::math::Vector2(20.0, 20.0), sdlgame::math::Vector2(60.0, 20.0));
+    ASSERT_TRUE(res_horiz.has_value());
+    EXPECT_DOUBLE_EQ(res_horiz->first.x, 20.0);
+    EXPECT_DOUBLE_EQ(res_horiz->first.y, 20.0);
+    EXPECT_DOUBLE_EQ(res_horiz->second.x, 60.0);
+    EXPECT_DOUBLE_EQ(res_horiz->second.y, 20.0);
+    
+    // Line going right to left
+    auto res_rev = r.clipline(sdlgame::math::Vector2(70.0, 70.0), sdlgame::math::Vector2(20.0, 20.0));
+    ASSERT_TRUE(res_rev.has_value());
+    EXPECT_DOUBLE_EQ(res_rev->first.x, 70.0);
+    EXPECT_DOUBLE_EQ(res_rev->first.y, 70.0);
+    EXPECT_DOUBLE_EQ(res_rev->second.x, 20.0);
+    EXPECT_DOUBLE_EQ(res_rev->second.y, 20.0);
+}
+
+TEST(RectWhiteBoxTest, SettersVector2) {
+    sdlgame::rect::Rect r(0.0, 0.0, 10.0, 10.0);
+    
+    r.setTopLeft(sdlgame::math::Vector2(5.0, 5.0));
+    EXPECT_DOUBLE_EQ(r.getLeft(), 5.0);
+    EXPECT_DOUBLE_EQ(r.getTop(), 5.0);
+    
+    r.setTopRight(sdlgame::math::Vector2(20.0, 5.0));
+    EXPECT_DOUBLE_EQ(r.getRight(), 20.0);
+    EXPECT_DOUBLE_EQ(r.getTop(), 5.0);
+    
+    r.setBottomLeft(sdlgame::math::Vector2(5.0, 20.0));
+    EXPECT_DOUBLE_EQ(r.getLeft(), 5.0);
+    EXPECT_DOUBLE_EQ(r.getBottom(), 20.0);
+}
+
+TEST(RectWhiteBoxTest, SettersDouble) {
+    sdlgame::rect::Rect r(0.0, 0.0, 10.0, 10.0);
+    
+    r.setTopLeft(5.0, 5.0);
+    EXPECT_DOUBLE_EQ(r.getLeft(), 5.0);
+    EXPECT_DOUBLE_EQ(r.getTop(), 5.0);
+    
+    r.setTopRight(20.0, 5.0);
+    EXPECT_DOUBLE_EQ(r.getRight(), 20.0);
+    EXPECT_DOUBLE_EQ(r.getTop(), 5.0);
+    
+    r.setBottomLeft(5.0, 20.0);
+    EXPECT_DOUBLE_EQ(r.getLeft(), 5.0);
+    EXPECT_DOUBLE_EQ(r.getBottom(), 20.0);
+    
+    r.setBottomRight(30.0, 30.0);
+    EXPECT_DOUBLE_EQ(r.getRight(), 30.0);
+    EXPECT_DOUBLE_EQ(r.getBottom(), 30.0);
+}
+
+TEST(RectWhiteBoxTest, WidthHeightSizes) {
+    sdlgame::rect::Rect r(0.0, 0.0, 10.0, 10.0);
+    r.setWidth(20.0);
+    EXPECT_DOUBLE_EQ(r.getWidth(), 20.0);
+    EXPECT_DOUBLE_EQ(r.getLeft(), -5.0); // inflate_ip keeps center
+    
+    r.setHeight(30.0);
+    EXPECT_DOUBLE_EQ(r.getHeight(), 30.0);
+    EXPECT_DOUBLE_EQ(r.getTop(), -10.0); // inflate_ip keeps center
+    
+    r.setSize(40.0, 50.0);
+    EXPECT_DOUBLE_EQ(r.getWidth(), 40.0);
+    EXPECT_DOUBLE_EQ(r.getHeight(), 50.0);
+    
+    r.setSize(sdlgame::math::Vector2(10.0, 10.0));
+    EXPECT_DOUBLE_EQ(r.getWidth(), 10.0);
+    EXPECT_DOUBLE_EQ(r.getHeight(), 10.0);
+}
+
+TEST(RectWhiteBoxTest, EdgeCaseCollisions) {
+    sdlgame::rect::Rect r(10.0, 10.0, 40.0, 40.0);
+    sdlgame::rect::Rect no_overlap(100.0, 100.0, 10.0, 10.0);
+    
+    r.overlap_ip(no_overlap);
+    EXPECT_DOUBLE_EQ(r.getWidth(), 0.0);
+    EXPECT_DOUBLE_EQ(r.getHeight(), 0.0);
+}
+
+TEST(RectWhiteBoxTest, SurfaceInteroperability) {
+    // Test that the Rect interoperates with SDL objects and surfaces correctly
+    sdlgame::rect::Rect r(10.0, 10.0, 50.0, 50.0);
+    SDL_Rect sdl_rect = r.to_SDL_Rect();
+    EXPECT_EQ(sdl_rect.x, 10);
+    EXPECT_EQ(sdl_rect.y, 10);
+    EXPECT_EQ(sdl_rect.w, 50);
+    EXPECT_EQ(sdl_rect.h, 50);
+    
+    SDL_FRect sdl_frect = r.to_SDL_FRect();
+    EXPECT_FLOAT_EQ(sdl_frect.x, 10.0f);
+    EXPECT_FLOAT_EQ(sdl_frect.y, 10.0f);
+    EXPECT_FLOAT_EQ(sdl_frect.w, 50.0f);
+    EXPECT_FLOAT_EQ(sdl_frect.h, 50.0f);
 }

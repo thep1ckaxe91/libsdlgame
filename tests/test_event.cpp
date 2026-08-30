@@ -37,6 +37,7 @@ TEST(EventTest, OperatorSquareBrackets) {
 }
 
 TEST(EventTest, GlobalFunctions) {
+    SDL_Init(SDL_INIT_EVENTS);
     // Test that we can call get()
     std::vector<Event>& events = get();
     // Test that we can call post()
@@ -44,9 +45,19 @@ TEST(EventTest, GlobalFunctions) {
     
     // Assert that the events reference is valid (by getting its size)
     EXPECT_GE(events.size(), 0);
+    SDL_Quit();
+}
+
+TEST(EventDeathTest, PostFailsWithoutInit) {
+    // White-box test to ensure SDL_CHECK terminates on SDL_PushEvent failure
+    EXPECT_DEATH({
+        SDL_Quit(); // Ensure SDL is completely uninitialized so PushEvent fails
+        post(12345);
+    }, "FATAL: SDL Error");
 }
 
 // --- White-box tests below ---
+#include <sstream>
 
 TEST(EventTest, ConstructorSDL_KEYDOWN) {
     SDL_Event sdl_e;
@@ -144,6 +155,16 @@ TEST(EventTest, ConstructorSDL_MOUSEMOTION) {
     EXPECT_EQ(e["yrel"], -10);
 }
 
+TEST(EventTest, ConstructorUnhandledType) {
+    SDL_Event sdl_e;
+    sdl_e.type = SDL_QUIT;
+    
+    Event e(sdl_e);
+    EXPECT_EQ(e.type, SDL_QUIT);
+    // For unhandled types dict is empty, so searching any key returns -1
+    EXPECT_EQ(e["nonexistent"], -1);
+}
+
 TEST(EventTest, OperatorSquareBracketsMissingKey) {
     SDL_Event sdl_e;
     sdl_e.type = SDL_KEYDOWN;
@@ -157,21 +178,32 @@ TEST(EventTest, OperatorSquareBracketsMissingKey) {
     EXPECT_EQ(e["nonexistent_key"], -1);
 }
 
-TEST(EventTest, PostWarningAndEventFetch) {
+TEST(EventTest, PostWarning) {
     SDL_Init(SDL_INIT_EVENTS);
     
     // Clear any preexisting events
     SDL_Event dummy;
     while(SDL_PollEvent(&dummy)) {}
     
+    std::stringstream buffer;
+    std::streambuf* old_cerr = std::cerr.rdbuf(buffer.rdbuf());
+    
     // Post non-user event (should log warning but still push)
     post(sdlgame::USEREVENT - 1);
     
-    // Post user event
+    std::cerr.rdbuf(old_cerr);
+    EXPECT_NE(buffer.str().find("WARNING: Posting non-user event type"), std::string::npos);
+    
+    buffer.str("");
+    old_cerr = std::cerr.rdbuf(buffer.rdbuf());
+    
+    // Post user event (should NOT log warning)
     post(sdlgame::USEREVENT + 1);
     
-    std::vector<Event>& evts = get();
+    std::cerr.rdbuf(old_cerr);
+    EXPECT_TRUE(buffer.str().empty());
     
+    std::vector<Event>& evts = get();
     ASSERT_GE(evts.size(), 2);
     EXPECT_EQ(evts[0].type, sdlgame::USEREVENT - 1);
     EXPECT_EQ(evts[1].type, sdlgame::USEREVENT + 1);
@@ -196,10 +228,19 @@ TEST(EventTest, GetPollLimit) {
     std::vector<Event>& evts = get();
     // Verify it only polled up to limit
     EXPECT_EQ(evts.size(), limit);
+    EXPECT_GE(evts.capacity(), limit);
+    
+    for (int i = 0; i < limit; ++i) {
+        EXPECT_EQ(evts[i].type, sdlgame::USEREVENT + i);
+    }
     
     // Next poll should get the remainder
     std::vector<Event>& evts2 = get();
     EXPECT_EQ(evts2.size(), 10);
+    
+    for (int i = 0; i < 10; ++i) {
+        EXPECT_EQ(evts2[i].type, sdlgame::USEREVENT + limit + i);
+    }
     
     SDL_Quit();
 }

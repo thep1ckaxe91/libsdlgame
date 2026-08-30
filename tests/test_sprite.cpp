@@ -5,6 +5,7 @@
 #include "sprite.hpp"
 #include <gtest/gtest.h>
 #include <memory>
+#include <string>
 #include <vector>
 
 using namespace sdlgame::sprite;
@@ -14,7 +15,7 @@ using namespace sdlgame::rect;
 class TestSprite : public Sprite {
 public:
   TestSprite() : Sprite() {}
-  explicit TestSprite(const std::shared_ptr<const Surface> &image)
+  explicit TestSprite(const std::shared_ptr<Surface<SDL_TEXTUREACCESS_STATIC>> &image)
       : Sprite(image) {}
 
   void update() override {
@@ -28,7 +29,7 @@ public:
   double radius;
 
   TestSpriteRad() : Sprite() {}
-  explicit TestSpriteRad(const std::shared_ptr<const Surface> &image)
+  explicit TestSpriteRad(const std::shared_ptr<Surface<SDL_TEXTUREACCESS_STATIC>> &image)
       : Sprite(image) {}
 
   void update() override {
@@ -43,7 +44,7 @@ class TestSpriteRadProp : public Sprite {
 
 public:
   TestSpriteRadProp() : Sprite() {}
-  explicit TestSpriteRadProp(const std::shared_ptr<const Surface> &image)
+  explicit TestSpriteRadProp(const std::shared_ptr<Surface<SDL_TEXTUREACCESS_STATIC>> &image)
       : Sprite(image) {}
 
   void update() override {
@@ -53,6 +54,19 @@ public:
 
   double radius() const { return r; }
   void set_rad(double r) { this->r = r; }
+};
+
+class TestSpriteNonArithmetic : public Sprite {
+public:
+  std::string radius = "10";
+
+  TestSpriteNonArithmetic() : Sprite() {}
+  explicit TestSpriteNonArithmetic(const std::shared_ptr<Surface<SDL_TEXTUREACCESS_STATIC>> &image)
+      : Sprite(image) {}
+
+  void update() override {
+    get_rect().setLeft(get_rect().getLeft() + 1);
+  }
 };
 
 TEST(SpriteTest, DefaultConstructor) {
@@ -66,7 +80,7 @@ TEST(SpriteTest, ConstructorWithImage) {
   sdlgame::display::set_mode(600, 400);
 
   auto surf = sdlgame::image::load("assets/dummy.png");
-  auto sprite = std::make_shared<TestSprite>(surf);
+  auto sprite = std::make_shared<TestSprite>(std::make_shared<Surface<SDL_TEXTUREACCESS_STATIC>>(std::move(surf)));
   EXPECT_FALSE(sprite->alive());
 }
 
@@ -137,6 +151,12 @@ TEST(SpriteTest, CollideCircle) {
 
   static_assert( HasRadiusMember<TestSpriteRad>);
   static_assert( HasRadiusProperties<TestSpriteRadProp>);
+  static_assert(!HasRadiusMember<TestSprite>);
+  static_assert(!HasRadiusProperties<TestSprite>);
+  static_assert(!HasRadiusMember<TestSpriteRadProp>);
+  static_assert(!HasRadiusProperties<TestSpriteRad>);
+  static_assert(!HasRadiusMember<TestSpriteNonArithmetic>);
+  static_assert(!HasRadiusProperties<TestSpriteNonArithmetic>);
 
   auto sprite3 = std::make_shared<TestSprite>();
   auto sprite4 = std::make_shared<TestSprite>();
@@ -153,7 +173,7 @@ TEST(SpriteTest, CollideCircle) {
   sprite2->radius = 5;
   EXPECT_TRUE(collide_circle(*sprite1, *sprite2)); // 5 + 5 = 10 >= 8
   sprite1->radius = 3;
-  sprite2->radius = 3; // FIXME: this test is failing for some reason
+  sprite2->radius = 3;
   EXPECT_FALSE(collide_circle(*sprite1, *sprite2)); // 3 + 3 = 6 < 8
 
   auto sprite5 = std::make_shared<TestSpriteRadProp>();
@@ -261,8 +281,8 @@ TEST(SpriteTest, GroupDraw) {
   sdlgame::display::set_mode(600, 400);
 
   auto surf = sdlgame::image::load("assets/dummy.png");
-  auto dest = sdlgame::image::load("assets/dummy.png");
-  auto sprite = std::make_shared<TestSprite>(surf);
+  auto dest = std::make_shared<Surface<SDL_TEXTUREACCESS_TARGET>>(600, 400);
+  auto sprite = std::make_shared<TestSprite>(std::make_shared<Surface<SDL_TEXTUREACCESS_STATIC>>(std::move(surf)));
   
   auto group = std::make_shared<Group>();
   group->add(sprite);
@@ -345,10 +365,10 @@ TEST(SpriteTest, SpriteGetImage) {
   sdlgame::display::set_mode(600, 400);
 
   auto surf = sdlgame::image::load("assets/dummy.png");
-  auto sprite = std::make_shared<TestSprite>(surf);
+  auto sprite = std::make_shared<TestSprite>(std::make_shared<Surface<SDL_TEXTUREACCESS_STATIC>>(std::move(surf)));
   
   const auto& img = sprite->get_image();
-  EXPECT_EQ(img.get_rect().getWidth(), surf->get_rect().getWidth());
+  EXPECT_EQ(img.get_rect().getWidth(), surf.get_rect().getWidth());
 }
 
 TEST(SpriteTest, GroupSingleAddNullptr) {
@@ -384,13 +404,29 @@ TEST(SpriteTest, SpriteCollideEmptyGroup) {
   EXPECT_TRUE(collided.empty());
 }
 
-TEST(SpriteTest, CollideCircleExplicitRadii) {
-  auto sprite1 = std::make_shared<TestSprite>();
-  sprite1->get_rect() = Rect(0, 0, 10, 10);
+TEST(SpriteTest, CollideCircleMixedTypes) {
+  auto sprite_def = std::make_shared<TestSprite>();
+  sprite_def->get_rect() = Rect(0, 0, 10, 10); // default radius is sqrt(5^2 + 5^2) = 7.07
+
+  auto sprite_rad = std::make_shared<TestSpriteRad>();
+  sprite_rad->get_rect() = Rect(12, 0, 10, 10); // center (17, 5). dx = 12, dy = 0.
   
-  auto sprite2 = std::make_shared<TestSprite>();
-  sprite2->get_rect() = Rect(8, 0, 10, 10);
+  // 7.07 + 5.0 = 12.07 > 12 -> True
+  sprite_rad->radius = 5.0;
+  EXPECT_TRUE(collide_circle(*sprite_def, *sprite_rad));
   
-  EXPECT_TRUE(collide_circle(*sprite1, *sprite2, 5.0, 5.0));
-  EXPECT_FALSE(collide_circle(*sprite1, *sprite2, 3.0, 3.0));
+  // 7.07 + 4.9 = 11.97 < 12 -> False
+  sprite_rad->radius = 4.9;
+  EXPECT_FALSE(collide_circle(*sprite_def, *sprite_rad));
+
+  auto sprite_prop = std::make_shared<TestSpriteRadProp>();
+  sprite_prop->get_rect() = Rect(0, 0, 10, 10); // center (5, 5). dx = 12, dy = 0.
+  
+  // 4.9 + 7.2 = 12.1 > 12 -> True
+  sprite_prop->set_rad(7.2);
+  EXPECT_TRUE(collide_circle(*sprite_prop, *sprite_rad));
+  
+  // 4.9 + 7.0 = 11.9 < 12 -> False
+  sprite_prop->set_rad(7.0);
+  EXPECT_FALSE(collide_circle(*sprite_prop, *sprite_rad));
 }

@@ -74,12 +74,12 @@ TEST(MixerTest, SoundCopyAssignment) {
 TEST(MixerTest, SoundLoadInvalidPathTerminates) {
     EXPECT_DEATH({
         Sound snd("nonexistent_path_12345.wav");
-    }, "Cant load track");
+    }, "FATAL: SDL Error");
     
     EXPECT_DEATH({
         Sound snd;
         snd.load("nonexistent_path_12345.wav");
-    }, "Cant load track");
+    }, "FATAL: SDL Error");
 }
 
 TEST(MixerTest, ChannelPlayTerminatesOnFailure) {
@@ -87,15 +87,14 @@ TEST(MixerTest, ChannelPlayTerminatesOnFailure) {
         Sound snd;
         Channel ch(1);
         ch.play(snd); 
-    }, "No channel available");
+    }, "FATAL: SDL Error");
 }
 
-TEST(MixerTest, SoundPlayPrintsOnFailure) {
-    testing::internal::CaptureStdout();
-    Sound snd;
-    snd.play();
-    std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_TRUE(output.find("No channel available") != std::string::npos);
+TEST(MixerTest, SoundPlayTerminatesOnFailure) {
+    EXPECT_DEATH({
+        Sound snd;
+        snd.play();
+    }, "FATAL: SDL Error");
 }
 
 TEST(MixerTest, SoundFadeOut) {
@@ -108,5 +107,60 @@ TEST(MixerTest, InitFailsAndTerminates) {
     EXPECT_DEATH({
         // Passing completely invalid parameters to force Mix_OpenAudio to fail
         init(-1, 0, -1, -1);
-    }, "Failed to init mixer");
+    }, "FATAL: SDL Error");
 }
+
+TEST(MixerTest, InitFailsAndTerminatesSize32) {
+    EXPECT_DEATH({
+        // Passing 32 for size to cover the AUDIO_F32SYS branch
+        init(-1, 32, -1, -1);
+    }, "FATAL: SDL Error");
+}
+
+TEST(MixerTest, SoundChunkSharedPtrSemantics) {
+    Sound snd1;
+    Mix_Chunk dummy;
+    // Inject a dummy chunk with a no-op deleter to test shared_ptr sharing 
+    // without triggering SDL_FreeChunk on invalid memory.
+    snd1.chunk = sdlgame::memory::SDLSharedPtr<Mix_Chunk>(&dummy, [](Mix_Chunk*){});
+    snd1.set_volume(0.6f);
+    
+    EXPECT_EQ(snd1.chunk.use_count(), 1);
+    
+    Sound snd2;
+    snd2 = snd1; // copy assignment
+    
+    EXPECT_EQ(snd1.chunk.use_count(), 2);
+    EXPECT_EQ(snd2.chunk.use_count(), 2);
+    EXPECT_EQ(snd2.chunk.get(), &dummy);
+    EXPECT_EQ(snd2.get_volume(), 0.6f); // check volume is copied
+    
+    Sound snd3(std::move(snd1)); // move construction
+    EXPECT_EQ(snd3.chunk.use_count(), 2);
+    EXPECT_EQ(snd1.chunk.use_count(), 0);
+    EXPECT_EQ(snd1.chunk.get(), nullptr);
+    EXPECT_EQ(snd3.get_volume(), 0.6f);
+    
+    Sound snd4;
+    snd4 = std::move(snd2); // move assignment
+    EXPECT_EQ(snd4.chunk.use_count(), 2);
+    EXPECT_EQ(snd2.chunk.use_count(), 0);
+    EXPECT_EQ(snd2.chunk.get(), nullptr);
+    EXPECT_EQ(snd4.get_volume(), 0.6f);
+}
+
+TEST(MixerTest, SoundPlayWithParametersTerminatesOnFailure) {
+    EXPECT_DEATH({
+        Sound snd;
+        Channel c = snd.play(2, 1000, 500);
+    }, "FATAL: SDL Error");
+}
+
+TEST(MixerTest, ChannelPlayWithParametersTerminates) {
+    EXPECT_DEATH({
+        Sound snd;
+        Channel ch(1);
+        ch.play(snd, 2, 2000, 100); 
+    }, "FATAL: SDL Error");
+}
+

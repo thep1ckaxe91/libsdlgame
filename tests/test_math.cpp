@@ -181,3 +181,80 @@ TEST(Vector2Test, StringFormatting) {
     std::string expected = "Vector2<" + std::to_string(1.5) + " , " + std::to_string(-2.5) + ">";
     EXPECT_EQ(v.toString(), expected);
 }
+
+TEST(MathTest, DegreeRadianEdgeCases) {
+    EXPECT_DOUBLE_EQ(degree_to_radian(0.0), 0.0);
+    EXPECT_DOUBLE_EQ(degree_to_radian(-180.0), -M_PI);
+    EXPECT_DOUBLE_EQ(degree_to_radian(360.0), 2 * M_PI);
+
+    EXPECT_DOUBLE_EQ(radian_to_degree(0.0), 0.0);
+    EXPECT_DOUBLE_EQ(radian_to_degree(-M_PI), -180.0);
+    EXPECT_DOUBLE_EQ(radian_to_degree(2 * M_PI), 360.0);
+}
+
+TEST(MathTest, ClampEdgeCases) {
+    EXPECT_DOUBLE_EQ(clamp(5.0, 5.0, 5.0), 5.0);
+    EXPECT_DOUBLE_EQ(clamp(4.0, 5.0, 5.0), 5.0);
+    EXPECT_DOUBLE_EQ(clamp(6.0, 5.0, 5.0), 5.0);
+}
+
+TEST(Vector2Test, MathOperatorsDivisionByZero) {
+    Vector2 v1(2.0, 3.0);
+    v1 /= 0.0;
+    EXPECT_TRUE(std::isinf(v1.x));
+    EXPECT_TRUE(std::isinf(v1.y));
+}
+
+TEST(Vector2Test, NormalizationEdgeCases) {
+    Vector2 v_norm(1.0, 0.0);
+    v_norm.normalize_ip();
+    EXPECT_DOUBLE_EQ(v_norm.x, 1.0);
+    EXPECT_DOUBLE_EQ(v_norm.y, 0.0);
+}
+
+TEST(Vector2Test, AngleToAdditionalEdgeCases) {
+    EXPECT_DOUBLE_EQ(Vector2(0, 0).angle_to(Vector2(0, 0)), 0.0);
+
+    EXPECT_DOUBLE_EQ(Vector2(1, 0).angle_to(Vector2(0, 1)), 90.0);
+    EXPECT_DOUBLE_EQ(Vector2(1, 0).angle_to(Vector2(0, -1)), 90.0);
+
+    EXPECT_DOUBLE_EQ(Vector2(1, 1).angle_to(Vector2(1, 1)), 0.0);
+}
+
+TEST(Vector2Test, RotateEdgeCases) {
+    Vector2 v(1.0, 0.0);
+
+    Vector2 rot_0 = v.rotate(0.0);
+    EXPECT_DOUBLE_EQ(rot_0.x, 1.0);
+    EXPECT_DOUBLE_EQ(rot_0.y, 0.0);
+
+    Vector2 rot_360 = v.rotate(360.0);
+    EXPECT_NEAR(rot_360.x, 1.0, 1e-10);
+    EXPECT_NEAR(rot_360.y, 0.0, 1e-10);
+
+    Vector2 rot_neg_90 = v.rotate(-90.0);
+    EXPECT_NEAR(rot_neg_90.x, 0.0, 1e-10);
+    EXPECT_NEAR(rot_neg_90.y, -1.0, 1e-10);
+}
+
+TEST(Vector2Test, DistanceEdgeCases) {
+    Vector2 v(1.0, 1.0);
+    EXPECT_DOUBLE_EQ(v.distance_to(v), 0.0);
+
+    Vector2 v2(-1.0, -1.0);
+    EXPECT_DOUBLE_EQ(v.distance_to(v2), std::sqrt(8.0));
+}
+
+TEST(Vector2Test, ReflectAndProjectEdgeCases) {
+    Vector2 p1(2.0, 2.0);
+    Vector2 normal_zero(0.0, 0.0);
+    
+    p1.project_ip(normal_zero);
+    EXPECT_DOUBLE_EQ(p1.x, 0.0);
+    EXPECT_DOUBLE_EQ(p1.y, 0.0);
+
+    Vector2 incident(1.0, 1.0);
+    Vector2 refl_zero = incident.reflect(normal_zero);
+    EXPECT_DOUBLE_EQ(refl_zero.x, 1.0);
+    EXPECT_DOUBLE_EQ(refl_zero.y, 1.0);
+}
