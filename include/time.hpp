@@ -12,6 +12,7 @@ struct SimClock
     using period = std::ratio<1>; // 1:1 with sec
     using duration = std::chrono::duration<rep, period>;
     using time_point = std::chrono::time_point<SimClock>;
+    // cppcheck-suppress unusedStructMember
     static constexpr bool is_steady = true;
 
     static time_point now() noexcept
@@ -114,9 +115,9 @@ namespace sdlgame::time
         timepoint_t start;
 
     public:
-        Timer(const std::string &name = "Func");
-        Timer(const char *name = "Func");
-        Timer(std::string &&name);
+        explicit Timer(const std::string &name = "Func");
+        explicit Timer(const char *name = "Func");
+        explicit Timer(std::string &&name);
 
         ~Timer();
     };
