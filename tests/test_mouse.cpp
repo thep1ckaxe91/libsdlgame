@@ -1,8 +1,13 @@
+#include <SDL_hints.h>
+#include <SDL_mouse.h>
+#include <SDL_stdinc.h>
+#include <SDL_video.h>
 #include <gtest/gtest.h>
 #include "mouse.hpp"
 #include "math.hpp"
 #include "display.hpp"
 #include <SDL2/SDL.h>
+#include <iostream>
 
 TEST(MouseTest, GetPos) {
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
@@ -64,26 +69,42 @@ TEST(MouseTest, SetVisible_EnablesAndDisables) {
 }
 
 TEST(MouseTest, GetPos_WithWindowAndRenderer) {
-    // Initialize SDL video and display to get a valid renderer
-    // This covers the SDL_RenderWindowToLogical normal behavior logic path
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
         GTEST_SKIP() << "Failed to initialize SDL Video";
     }
-    
+#ifdef __linux__
+    auto session_type = SDL_getenv("XDG_SESSION_TYPE");
+    if(session_type != nullptr && std::string(session_type) == "wayland") {
+        std::cerr << "Wayland doesn't support mouse warp, please test manually\n";
+        GTEST_SKIP();
+    }
+#endif
+
     // set_mode will create the window and renderer
     sdlgame::display::set_mode(800, 600);
     SDL_Renderer* renderer = sdlgame::display::get_renderer();
     ASSERT_NE(renderer, nullptr);
     
     // Force a specific logical size so we can verify coordinate mapping
-    SDL_RenderSetLogicalSize(renderer, 400, 300);
+    if(SDL_RenderSetLogicalSize(renderer, 400, 300)) {
+        GTEST_SKIP() << "Failed to set renderer logical size";
+    }
     
     SDL_Window* win = sdlgame::display::get_window();
     ASSERT_NE(win, nullptr);
-    
-    // Move mouse to specific window coordinates
+    // FIXME: the problem being on wayland, call to warp mouse position is an noop
+    // for that reason, we've tried to fake event, but that also doesnt seem to work either
+    // so does override video driver or env values
+    // 
+
+#ifdef __linux__
+    SDL_ShowCursor(SDL_FALSE);
+#endif
     SDL_WarpMouseInWindow(win, 400, 300);
-    SDL_PumpEvents(); // Update internal mouse state
+#ifdef __linux__
+    SDL_ShowCursor(SDL_TRUE);
+#endif
+    SDL_PumpEvents();
     
     sdlgame::math::Vector2 pos = sdlgame::mouse::get_pos();
     // Since window is 800x600 and logical is 400x300, 
@@ -126,9 +147,6 @@ TEST(MouseTest, GetPos_WithoutRendererEdgeCase) {
     // Ensure display is shut down
     sdlgame::display::quit();
     
-    // When there's no renderer, SDL_RenderWindowToLogical will fail.
-    // logicalX and logicalY in get_pos() will be uninitialized.
-    // With SDL_CHECK, this path now causes termination.
     EXPECT_DEATH({
         sdlgame::mouse::get_pos();
     }, "FATAL: SDL Error");
