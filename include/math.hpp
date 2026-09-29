@@ -1,19 +1,28 @@
 #pragma once
+#include <concepts>
 #ifndef SDLGAME_MATH_
 #define SDLGAME_MATH_
+#include <SDL2/SDL_rect.h>
 #include <string>
-
-struct SDL_Point;
-struct SDL_FPoint;
-
-namespace sdlgame {
 /**
  * namespace for most use math functionality in game dev
  */
-namespace math {
-double degree_to_radian(double deg);
-double radian_to_degree(double rad);
-double clamp(double val, double left, double right);
+namespace sdlgame::math {
+
+constexpr double degree_to_radian(double deg) { return deg * M_PI / 180.0; }
+constexpr double radian_to_degree(double rad) { return rad * 180.0 / M_PI; }
+
+
+template <typename T>
+concept Arithmetic = std::floating_point<T> || std::integral<T>;
+
+Arithmetic auto clamp(Arithmetic auto val, Arithmetic auto left,
+                      Arithmetic auto right) {
+  if (left > right)
+    std::swap(left, right);
+  return (val < left ? left : (val > right ? right : val));
+}
+
 /**
  *  a class for 2D vector, also can represent a point on a 2d surface
  * since the simplicity of 2d vector, we dont need get and set function
@@ -22,22 +31,24 @@ double clamp(double val, double left, double right);
  * Vector2
  *
  */
-class Vector2 {
-public:
-  double x, y;
+struct Vector2 {
+  double x = 0;
+  double y = 0;
+
   Vector2() = default;
-  Vector2(const SDL_Point &p);
+  explicit Vector2(const SDL_Point &p);
   Vector2(double, double);
   Vector2(const Vector2 &) = default;
   Vector2 &operator=(const Vector2 &) = default;
   Vector2 &operator+=(const Vector2 &oth);
   Vector2 &operator-=(const Vector2 &oth);
-  Vector2 &operator*=(const double &scalar);
-  Vector2 &operator/=(const double &scalar);
+  Vector2 &operator*=(double scalar);
+  Vector2 &operator/=(double scalar);
   Vector2 operator+(const Vector2 &oth) const;
   Vector2 operator-() const;
   Vector2 operator-(const Vector2 &oth) const;
-  Vector2 operator*(const double &scalar) const;
+  Vector2 operator*(double scalar) const;
+  Vector2 operator/(double scalar) const;
 
   bool operator==(const Vector2 &oth) const;
   /**
@@ -101,7 +112,7 @@ public:
 };
 
 Vector2 operator*(const double &scalar, const Vector2 &v);
-} // namespace math
-} // namespace sdlgame
+
+} // namespace sdlgame::math
 
 #endif

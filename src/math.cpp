@@ -1,19 +1,10 @@
 #include "math.hpp"
-#include "SDL2/SDL.h"
-#include <cmath>
 #include <algorithm>
+#include <cmath>
 
 #define M_PI 3.14159265358979323846
 
 namespace sdlgame::math {
-double degree_to_radian(double deg) { return deg * M_PI / 180.0; }
-double radian_to_degree(double rad) { return rad * 180.0 / M_PI; }
-
-double clamp(double val, double left, double right) {
-  if (left > right)
-    std::swap(left, right);
-  return (val < left ? left : (val > right ? right : val));
-}
 
 Vector2::Vector2(const SDL_Point &p)
     : x(static_cast<double>(p.x)), y(static_cast<double>(p.y)) {}
@@ -29,12 +20,12 @@ Vector2 &Vector2::operator-=(const Vector2 &oth) {
   y -= oth.y;
   return *this;
 }
-Vector2 &Vector2::operator*=(const double &scalar) {
+Vector2 &Vector2::operator*=(double scalar) {
   x *= scalar;
   y *= scalar;
   return *this;
 }
-Vector2 &Vector2::operator/=(const double &scalar) {
+Vector2 &Vector2::operator/=(double scalar) {
   x /= scalar;
   y /= scalar;
   return *this;
@@ -47,8 +38,12 @@ Vector2 Vector2::operator-() const { return Vector2(-x, -y); }
 Vector2 Vector2::operator-(const Vector2 &oth) const {
   return {x - oth.x, y - oth.y};
 }
-Vector2 Vector2::operator*(const double &scalar) const {
+Vector2 Vector2::operator*(double scalar) const {
   return Vector2(scalar * x, scalar * y);
+}
+
+Vector2 Vector2::operator/(double scalar) const {
+  return {x / scalar, y / scalar};
 }
 
 bool Vector2::operator==(const Vector2 &oth) const {
@@ -60,22 +55,24 @@ double Vector2::sqr_magnitude() const { return x * x + y * y; }
 
 Vector2 Vector2::normalize() const {
   double mag = magnitude();
-  if (mag == 0) return {0, 0};
+  if (mag == 0)
+    return {0, 0};
   return Vector2(x / mag, y / mag);
 }
 
-void Vector2::normalize_ip() { 
+void Vector2::normalize_ip() {
   double mag = magnitude();
-  if (mag != 0) *this *= 1.0 / mag; 
+  if (mag != 0)
+    *this *= 1.0 / mag;
 }
 
 double Vector2::dot(const Vector2 &oth) const { return x * oth.x + y * oth.y; }
 
 double Vector2::angle_to(const Vector2 &oth) const {
-  double mag1 = magnitude();
-  double mag2 = oth.magnitude();
-  if (mag1 == 0 || mag2 == 0) return 0;
-  return std::acos(std::clamp(dot(oth) / (mag1 * mag2), -1.0, 1.0)) * 180.0 / M_PI;
+  double p = dot(oth);
+  double det = x * oth.y - y * oth.x;
+  double deg = radian_to_degree(std::atan2(det, p));
+  return std::min(abs(deg), 360 - abs(deg));
 }
 
 Vector2 Vector2::rotate(double deg) const {
@@ -103,7 +100,8 @@ void Vector2::reflect_ip(const Vector2 &normal) { *this = reflect(normal); }
 
 Vector2 Vector2::project(const Vector2 &normal) const {
   double sqr_mag = normal.sqr_magnitude();
-  if (sqr_mag == 0) return {0, 0};
+  if (sqr_mag == 0)
+    return {0, 0};
   return normal * (dot(normal) / sqr_mag);
 }
 
@@ -117,8 +115,6 @@ SDL_FPoint Vector2::to_SDL_FPoint() const {
   return {static_cast<float>(x), static_cast<float>(y)};
 }
 
-Vector2 operator*(const double &scalar, const Vector2 &v) {
-  return v * scalar;
-}
+Vector2 operator*(const double &scalar, const Vector2 &v) { return v * scalar; }
 
 } // namespace sdlgame::math
