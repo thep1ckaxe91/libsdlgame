@@ -5,7 +5,6 @@
 #include "memory.hpp"
 #include "surface.hpp"
 #include <filesystem>
-#include <string>
 
 namespace fs = std::filesystem;
 
@@ -20,7 +19,7 @@ enum class AntiAlias : uint8_t { SOLID, SHADED, BLENDED };
 void init();
 class Font {
 public:
-  Font(const fs::path& path, int size = 12);
+  explicit Font(const fs::path &path, int size = 12);
   Font() = default;
   /**
    * @return a surface that only contain the text
@@ -32,7 +31,7 @@ public:
    * it automatically endline, if it is default = 0,
    * then will only endline when use endline character
    */
-  sdlgame::surface::Surface
+  surface::Surface<SDL_TEXTUREACCESS_STATIC>
   render(const std::string &text, AntiAlias antialias,
          sdlgame::color::Color color, uint32_t wrap_length = 0,
          sdlgame::color::Color background = {0, 0, 0, 0});
@@ -41,7 +40,7 @@ public:
 
 private:
   memory::SDLSharedPtr<TTF_Font> m_font;
-  int m_height;
+  int m_height = 16;
 };
 
 } // namespace sdlgame::font

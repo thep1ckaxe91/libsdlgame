@@ -46,7 +46,7 @@ void Group::update() {
     sprite->update();
   }
 }
-void Group::draw(surface::Surface &surface) {
+void Group::draw(surface::Surface<SDL_TEXTUREACCESS_TARGET> &surface) {
   for (const auto &sprite : m_sprites) {
     if (sprite->m_image) {
       surface.blit(*sprite->m_image, sprite->get_rect().getTopLeft(),
@@ -55,10 +55,15 @@ void Group::draw(surface::Surface &surface) {
   }
 }
 
-auto Group::begin() const { return m_sprites.begin(); }
-auto Group::end() const { return m_sprites.end(); }
+std::vector<std::shared_ptr<Sprite>>::const_iterator Group::begin() const {
+  return m_sprites.begin();
+}
+std::vector<std::shared_ptr<Sprite>>::const_iterator Group::end() const {
+  return m_sprites.end();
+}
 
-Sprite::Sprite(const std::shared_ptr<const surface::Surface> &image)
+Sprite::Sprite(
+    const std::shared_ptr<surface::Surface<SDL_TEXTUREACCESS_STATIC>> &image)
     : m_rect(image->get_rect()), m_image(image) {}
 
 std::span<const std::shared_ptr<Group>> Sprite::groups() const {
@@ -101,7 +106,7 @@ bool Sprite::alive() const { return !m_groups.empty(); }
 rect::Rect &Sprite::get_rect() { return m_rect; }
 const rect::Rect &Sprite::get_rect() const { return m_rect; }
 
-const surface::Surface & Sprite::get_image() const {
+const surface::Surface<SDL_TEXTUREACCESS_STATIC> &Sprite::get_image() const {
   return *m_image;
 }
 
@@ -148,12 +153,6 @@ spritecollide(const std::shared_ptr<Sprite> &sprite,
 
 bool collide_rect(const Sprite &left, const Sprite &right) {
   return left.get_rect().colliderect(right.get_rect());
-}
-
-bool collide_circle(const Sprite &left, const Sprite &right, double left_radius,
-                    double right_radius) {
-  return left.get_rect().getCenter().distance_to(right.get_rect().getCenter()) <
-         left_radius + right_radius;
 }
 
 } // namespace sdlgame::sprite

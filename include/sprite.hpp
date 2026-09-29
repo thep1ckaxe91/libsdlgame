@@ -1,15 +1,15 @@
 #pragma once
+#include <SDL_render.h>
 #include <concepts>
-#include <iostream>
 #include <type_traits>
-#ifndef SDLGAME_SPRITE_
-#define SDLGAME_SPRITE_
 #include "rect.hpp"
 #include "surface.hpp"
 #include <memory>
 #include <span>
 #include <vector>
 
+#ifndef SDLGAME_SPRITE_
+#define SDLGAME_SPRITE_
 // TODO: there are serveral ideas that might be helful in the future, includes:
 // + add with Container iterator begin and end with template
 // + more proper inheritance design
@@ -48,11 +48,11 @@ public:
   virtual void remove(const std::shared_ptr<Sprite> &sprite);
   bool has(const std::shared_ptr<Sprite> &sprite) const;
   virtual void update();
-  virtual void draw(surface::Surface &surface);
+  virtual void draw(surface::Surface<SDL_TEXTUREACCESS_TARGET> &surface);
   void empty(); // remove all sprite
 
-  auto begin() const;
-  auto end() const;
+  std::vector<std::shared_ptr<Sprite>>::const_iterator begin() const;
+  std::vector<std::shared_ptr<Sprite>>::const_iterator end() const;
 };
 
 class Sprite : public std::enable_shared_from_this<Sprite> {
@@ -61,7 +61,7 @@ class Sprite : public std::enable_shared_from_this<Sprite> {
 
 protected:
   rect::Rect m_rect;
-  std::shared_ptr<const surface::Surface> m_image;
+  std::shared_ptr<surface::Surface<SDL_TEXTUREACCESS_STATIC>> m_image;
 
   mutable std::vector<std::weak_ptr<Group>> m_groups;
   mutable std::vector<std::shared_ptr<Group>> m_groups_cache;
@@ -69,7 +69,7 @@ protected:
 
 public:
   Sprite() = default;
-  explicit Sprite(const std::shared_ptr<const surface::Surface> &image);
+  explicit Sprite(const std::shared_ptr<surface::Surface<SDL_TEXTUREACCESS_STATIC>> &image);
 
   Sprite(const Sprite &) = delete;
   Sprite(Sprite &&) = delete;
@@ -92,7 +92,7 @@ public:
   rect::Rect &get_rect();
   const rect::Rect &get_rect() const;
 
-  const surface::Surface &get_image() const;
+  const surface::Surface<SDL_TEXTUREACCESS_STATIC> &get_image() const;
 };
 
 /**
