@@ -44,7 +44,7 @@ TEST(RectTest, Clipline) {
     sdlgame::rect::Rect r(10.0, 10.0, 80.0, 80.0);
 
     // 1. Line completely inside
-    auto res = r.clipline(sdlgame::math::Vector2(20.0, 20.0), sdlgame::math::Vector2(70.0, 70.0));
+    auto res = r.clipline({20.0, 20.0}, {70.0, 70.0});
     ASSERT_TRUE(res.has_value());
     EXPECT_DOUBLE_EQ(res->first.x, 20.0);
     EXPECT_DOUBLE_EQ(res->first.y, 20.0);
@@ -52,7 +52,7 @@ TEST(RectTest, Clipline) {
     EXPECT_DOUBLE_EQ(res->second.y, 70.0);
 
     // 2. Line intersects the rect
-    auto res2 = r.clipline(sdlgame::math::Vector2(0.0, 50.0), sdlgame::math::Vector2(100.0, 50.0));
+    auto res2 = r.clipline({0.0, 50.0}, {100.0, 50.0});
     ASSERT_TRUE(res2.has_value());
     EXPECT_DOUBLE_EQ(res2->first.x, 10.0); // clamped to left edge
     EXPECT_DOUBLE_EQ(res2->first.y, 50.0);
@@ -60,19 +60,19 @@ TEST(RectTest, Clipline) {
     EXPECT_DOUBLE_EQ(res2->second.y, 50.0);
 
     // 3. Line completely outside
-    auto res3 = r.clipline(sdlgame::math::Vector2(0.0, 0.0), sdlgame::math::Vector2(0.0, 100.0));
+    auto res3 = r.clipline({0.0, 0.0}, {0.0, 100.0});
     EXPECT_FALSE(res3.has_value());
 
     // 4. Line parallel and outside (c.values[i] == 0.0, q.values[i] < 0)
-    auto res4 = r.clipline(sdlgame::math::Vector2(5.0, 0.0), sdlgame::math::Vector2(5.0, 100.0));
+    auto res4 = r.clipline({5.0, 0.0}, {5.0, 100.0});
     EXPECT_FALSE(res4.has_value());
     
     // 5. Line rejected because t0 > t1 (enters after leaving)
-    auto res5 = r.clipline(sdlgame::math::Vector2(0.0, 0.0), sdlgame::math::Vector2(100.0, 5.0));
+    auto res5 = r.clipline({0.0, 0.0}, {100.0, 5.0});
     EXPECT_FALSE(res5.has_value());
     
     // 6. Line intersecting just one edge (starts inside, ends outside)
-    auto res6 = r.clipline(sdlgame::math::Vector2(50.0, 50.0), sdlgame::math::Vector2(100.0, 100.0));
+    auto res6 = r.clipline({50.0, 50.0}, {100.0, 100.0});
     ASSERT_TRUE(res6.has_value());
     EXPECT_DOUBLE_EQ(res6->first.x, 50.0);
     EXPECT_DOUBLE_EQ(res6->first.y, 50.0);
@@ -154,7 +154,7 @@ TEST(RectTest, ToSDLRect) {
 TEST(RectWhiteBoxTest, CliplineParallelInside) {
     sdlgame::rect::Rect r(10.0, 10.0, 80.0, 80.0);
     // Line parallel to y-axis (vertical) and completely inside x boundaries
-    auto res = r.clipline(sdlgame::math::Vector2(20.0, 5.0), sdlgame::math::Vector2(20.0, 95.0));
+    auto res = r.clipline({20.0, 5.0}, {20.0, 95.0});
     ASSERT_TRUE(res.has_value());
     EXPECT_DOUBLE_EQ(res->first.x, 20.0);
     EXPECT_DOUBLE_EQ(res->first.y, 10.0);
@@ -239,8 +239,8 @@ TEST(RectWhiteBoxTest, ContainsEdgeCases) {
 
 TEST(RectWhiteBoxTest, CollidePointVector2) {
     sdlgame::rect::Rect r(10.0, 10.0, 40.0, 40.0);
-    EXPECT_TRUE(r.collidepoint(sdlgame::math::Vector2(20.0, 20.0)));
-    EXPECT_FALSE(r.collidepoint(sdlgame::math::Vector2(0.0, 0.0)));
+    EXPECT_TRUE(r.collidepoint({20.0, 20.0}));
+    EXPECT_FALSE(r.collidepoint({0.0, 0.0}));
 }
 
 TEST(RectWhiteBoxTest, CollideListEmpty) {
@@ -269,28 +269,28 @@ TEST(RectWhiteBoxTest, GetterSetterConsistency) {
     EXPECT_DOUBLE_EQ(r.getTopLeft().x, r.getLeft());
     EXPECT_DOUBLE_EQ(r.getTopLeft().y, r.getTop());
     
-    r.setTopLeft(sdlgame::math::Vector2(0.0, 0.0));
+    r.setTopLeft({0.0, 0.0});
     EXPECT_DOUBLE_EQ(r.getLeft(), 0.0);
     EXPECT_DOUBLE_EQ(r.getTop(), 0.0);
     
-    r.setBottomRight(sdlgame::math::Vector2(100.0, 100.0));
+    r.setBottomRight({100.0, 100.0});
     EXPECT_DOUBLE_EQ(r.getRight(), 100.0);
     EXPECT_DOUBLE_EQ(r.getBottom(), 100.0);
     
-    r.setCenter(sdlgame::math::Vector2(50.0, 50.0));
+    r.setCenter({50.0, 50.0});
     EXPECT_DOUBLE_EQ(r.getCenterX(), 50.0);
     EXPECT_DOUBLE_EQ(r.getCenterY(), 50.0);
     
-    r.setMidTop(sdlgame::math::Vector2(50.0, 10.0));
+    r.setMidTop({50.0, 10.0});
     EXPECT_DOUBLE_EQ(r.getTop(), 10.0);
     
-    r.setMidBottom(sdlgame::math::Vector2(50.0, 90.0));
+    r.setMidBottom({50.0, 90.0});
     EXPECT_DOUBLE_EQ(r.getBottom(), 90.0);
     
-    r.setMidLeft(sdlgame::math::Vector2(10.0, 50.0));
+    r.setMidLeft({10.0, 50.0});
     EXPECT_DOUBLE_EQ(r.getLeft(), 10.0);
     
-    r.setMidRight(sdlgame::math::Vector2(90.0, 50.0));
+    r.setMidRight({90.0, 50.0});
     EXPECT_DOUBLE_EQ(r.getRight(), 90.0);
 }
 
@@ -298,7 +298,7 @@ TEST(RectWhiteBoxTest, CliplineEdgeCases) {
     sdlgame::rect::Rect r(10.0, 10.0, 80.0, 80.0);
     
     // Horizontal line inside
-    auto res_horiz = r.clipline(sdlgame::math::Vector2(20.0, 20.0), sdlgame::math::Vector2(60.0, 20.0));
+    auto res_horiz = r.clipline({20.0, 20.0}, {60.0, 20.0});
     ASSERT_TRUE(res_horiz.has_value());
     EXPECT_DOUBLE_EQ(res_horiz->first.x, 20.0);
     EXPECT_DOUBLE_EQ(res_horiz->first.y, 20.0);
@@ -306,7 +306,7 @@ TEST(RectWhiteBoxTest, CliplineEdgeCases) {
     EXPECT_DOUBLE_EQ(res_horiz->second.y, 20.0);
     
     // Line going right to left
-    auto res_rev = r.clipline(sdlgame::math::Vector2(70.0, 70.0), sdlgame::math::Vector2(20.0, 20.0));
+    auto res_rev = r.clipline({70.0, 70.0}, {20.0, 20.0});
     ASSERT_TRUE(res_rev.has_value());
     EXPECT_DOUBLE_EQ(res_rev->first.x, 70.0);
     EXPECT_DOUBLE_EQ(res_rev->first.y, 70.0);
@@ -317,15 +317,15 @@ TEST(RectWhiteBoxTest, CliplineEdgeCases) {
 TEST(RectWhiteBoxTest, SettersVector2) {
     sdlgame::rect::Rect r(0.0, 0.0, 10.0, 10.0);
     
-    r.setTopLeft(sdlgame::math::Vector2(5.0, 5.0));
+    r.setTopLeft({5.0, 5.0});
     EXPECT_DOUBLE_EQ(r.getLeft(), 5.0);
     EXPECT_DOUBLE_EQ(r.getTop(), 5.0);
     
-    r.setTopRight(sdlgame::math::Vector2(20.0, 5.0));
+    r.setTopRight({20.0, 5.0});
     EXPECT_DOUBLE_EQ(r.getRight(), 20.0);
     EXPECT_DOUBLE_EQ(r.getTop(), 5.0);
     
-    r.setBottomLeft(sdlgame::math::Vector2(5.0, 20.0));
+    r.setBottomLeft({5.0, 20.0});
     EXPECT_DOUBLE_EQ(r.getLeft(), 5.0);
     EXPECT_DOUBLE_EQ(r.getBottom(), 20.0);
 }
@@ -364,7 +364,7 @@ TEST(RectWhiteBoxTest, WidthHeightSizes) {
     EXPECT_DOUBLE_EQ(r.getWidth(), 40.0);
     EXPECT_DOUBLE_EQ(r.getHeight(), 50.0);
     
-    r.setSize(sdlgame::math::Vector2(10.0, 10.0));
+    r.setSize({10.0, 10.0});
     EXPECT_DOUBLE_EQ(r.getWidth(), 10.0);
     EXPECT_DOUBLE_EQ(r.getHeight(), 10.0);
 }

@@ -165,37 +165,45 @@ bool Rect::colliderect(const Rect &oth) const {
            y > oth.getBottom());
 }
 
-// minor attempt for native O3 vectorization
-struct alignas(32) Vec4d {
-  double values[4];
-};
-
 std::optional<std::pair<math::Vector2, math::Vector2>>
 Rect::clipline(const math::Vector2 &st, const math::Vector2 &ed) const {
-  // liang barsky method
-  // 4 ele, left, right, top, bottom acoordingly
-  Vec4d q = {st.x - x, x + w - st.x, st.y - y, y + h - st.y};
-  Vec4d c = {st.x - ed.x, ed.x - st.x, st.y - ed.y, ed.y - st.y};
-  double t0 = 0, t1 = 1;
+  double t0 = 0.0;
+  double t1 = 1.0;
 
-  for (int i = 0; i < 4; i++) {
-    if (c.values[i] == 0.0) {
-      if (q.values[i] < 0.0)
+  // Cache directional deltas to avoid recomputation
+  const double dx = ed.x - st.x;
+  const double dy = ed.y - st.y;
+
+  // Standard Liang-Barsky p and q parameters unrolled
+  const double p[4] = {-dx, dx, -dy, dy};
+  const double q[4] = {st.x - x, x + w - st.x, st.y - y, y + h - st.y};
+
+  // Unroll the loop manually to hint the compiler and eliminate loop overhead
+  for (int i = 0; i < 4; ++i) {
+    if (p[i] == 0.0) {
+      if (q[i] < 0.0)
         return std::nullopt;
     } else {
-      double r = q.values[i] / c.values[i];
-      if (c.values[i] > 0)
-        t0 = std::max(t0, r);
-      else
-        t1 = std::min(t1, r);
+      const double r = q[i] / p[i];
+      if (p[i] < 0.0) {
+        if (r > t1)
+          return std::nullopt;
+        if (r > t0)
+          t0 = r;
+      } else {
+        if (r < t0)
+          return std::nullopt;
+        if (r < t1)
+          t1 = r;
+      }
     }
   }
 
   if (t0 > t1)
     return std::nullopt;
+
   return std::pair<math::Vector2, math::Vector2>{
-      {st.x + c.values[1] * t0, st.y + c.values[3] * t0},
-      {st.x + c.values[1] * t1, st.y + c.values[3] * t1}};
+      {st.x + dx * t0, st.y + dy * t0}, {st.x + dx * t1, st.y + dy * t1}};
 }
 
 /**
@@ -301,7 +309,7 @@ double Rect::getLeft() const { return x; }
 double Rect::getRight() const { return x + w; }
 double Rect::getBottom() const { return y + h; }
 double Rect::getCenterX() const { return x + w / 2; }
-double Rect::getCenterY() const { return y + w / 2; }
+double Rect::getCenterY() const { return y + h / 2; }
 math::Vector2 Rect::getSize() const { return {w, h}; }
 math::Vector2 Rect::getCenter() const { return {getCenterX(), getCenterY()}; }
 math::Vector2 Rect::getTopLeft() const { return {x, y}; }

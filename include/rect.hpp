@@ -3,9 +3,9 @@
 #define SDLGAME_RECT_
 #include "SDL2/SDL_rect.h"
 #include "math.hpp"
+#include <optional>
 #include <string>
 #include <vector>
-#include <optional>
 
 namespace sdlgame::rect {
 /**
@@ -26,7 +26,7 @@ namespace sdlgame::rect {
 class Rect {
 
 private:
-  double x, y, w, h;
+  double x{}, y{}, w{}, h{};
 
 public:
   Rect() = default;
@@ -109,7 +109,8 @@ public:
    */
   bool colliderect(const Rect &oth) const;
 
-  std::optional<std::pair<math::Vector2,math::Vector2>> clipline(const math::Vector2& start, const math::Vector2& end) const;
+  std::optional<std::pair<math::Vector2, math::Vector2>>
+  clipline(const math::Vector2 &start, const math::Vector2 &end) const;
 
   /**
    * @return return whether the caller collide with any of the rect in the list
@@ -158,7 +159,7 @@ public:
 
   void setMidRight(double _x, double _y);
   void setMidRight(const math::Vector2 &pos);
-  
+
   double getWidth() const;
   double getHeight() const;
   double getTop() const;
