@@ -1,8 +1,8 @@
 #include "event.hpp"
 #include "SDL2/SDL_events.h"
 #include "constants.hpp"
+#include "engine.hpp"
 #include <iostream>
-#include <stdexcept>
 
 namespace sdlgame::event {
 namespace {
@@ -35,8 +35,8 @@ Event::Event(SDL_Event e) : sdl_event(e) {
   }
 }
 
-int64_t Event::operator[](std::string key) const {
-  if (dict.find(key) != dict.end()) {
+int64_t Event::operator[](const std::string& key) const {
+  if (dict.contains(key)) {
     return dict.at(key);
   }
   return -1;
@@ -64,6 +64,6 @@ void post(uint32_t event_type) {
     std::cerr << "WARNING: Posting non-user event type\n";
   }
   tmp.sdl_event.type = event_type;
-  SDL_PushEvent(&tmp.sdl_event);
+  SDL_CHECK(SDL_PushEvent(&tmp.sdl_event));
 }
 } // namespace sdlgame::event

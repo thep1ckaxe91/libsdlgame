@@ -12,15 +12,15 @@ namespace sdlgame::event {
  */
 class Event {
 private:
-  std::unordered_map<std::string, int64_t> dict; // FIXME: this kind of architecture is hell
+  std::unordered_map<std::string, int64_t> dict; // FIXME: this kind of architecture is hell (Solution: union? => read C++ mem management for this)
 
 public:
   uint32_t type;
   uint32_t timestamp;
   SDL_Event sdl_event;
   Event();
-  Event(SDL_Event e);
-  int64_t operator[](std::string key) const;
+  explicit Event(SDL_Event e);
+  int64_t operator[](const std::string& key) const;
 };
 std::vector<Event> &get();
 /**please only use this for user event*/
