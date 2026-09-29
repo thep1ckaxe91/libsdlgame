@@ -1,5 +1,7 @@
+#include <filesystem>
 #include <gtest/gtest.h>
 #include "mixer.hpp"
+#include "engine.hpp"
 
 using namespace sdlgame::mixer;
 
@@ -40,15 +42,15 @@ TEST(MixerTest, SoundConstructorsAndVolume) {
 }
 
 TEST(MixerTest, SoundAndChannelAPI) {
-    Sound snd;
+    sdlgame::init();
+    sdlgame::mixer::init();
+    Sound snd{fs::path{"assets"} / "dummy.mp3"};
     Channel ch(1);
     
     // Testing the signatures of play and fadeout
-    // We won't execute these if they cause a crash on null chunk, but we ensure they compile.
-    // If the implementation is robust, this shouldn't crash.
-    // snd.play(0, -1, 0);
-    // ch.play(snd, 0, -1, 0);
-    // snd.fadeout(100);
+    snd.play(0, -1, 0);
+    ch.play(snd, 0, -1, 0);
+    snd.fadeout(100);
     
     SUCCEED();
 }

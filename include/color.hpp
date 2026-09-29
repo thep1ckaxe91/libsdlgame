@@ -13,26 +13,21 @@ namespace sdlgame::color {
  */
 class Color {
 public:
-  uint8_t r, g, b, a;
+  uint8_t r = 0, g = 0, b = 0, a = 0;
 
   Color() = default;
-  Color(const std::string &name);
+  
+  explicit Color(std::string_view name);
 
   template <std::convertible_to<uint8_t> Tr, std::convertible_to<uint8_t> Tg,
-            std::convertible_to<uint8_t> Tb, std::convertible_to<uint8_t> Ta>
-  constexpr Color(Tr _r, Tg _g, Tb _b, Ta _a)
+            std::convertible_to<uint8_t> Tb, std::convertible_to<uint8_t> Ta = int>
+  constexpr Color(Tr _r, Tg _g, Tb _b, Ta _a = 255)
       : r(static_cast<uint8_t>(_r)), g(static_cast<uint8_t>(_g)),
         b(static_cast<uint8_t>(_b)), a(static_cast<uint8_t>(_a)) {}
 
-  template <std::convertible_to<uint8_t> Tr, std::convertible_to<uint8_t> Tg,
-            std::convertible_to<uint8_t> Tb>
-  constexpr Color(Tr _r, Tg _g, Tb _b)
-      : r(static_cast<uint8_t>(_r)), g(static_cast<uint8_t>(_g)),
-        b(static_cast<uint8_t>(_b)), a(255) {}
-
   SDL_Color to_SDL_Color() const;
   /**return Uint32 kind of color*/
-  uint32_t toUint32Color() const;
+  uint32_t toUint32Color(uint32_t pixel_format = SDL_PIXELFORMAT_RGBA32) const;
   std::string toString();
 
   Color operator+(const Color &) const;

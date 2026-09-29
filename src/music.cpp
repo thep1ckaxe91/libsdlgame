@@ -1,38 +1,26 @@
 #include "music.hpp"
+#include "engine.hpp"
 #include "SDL2/SDL_mixer.h"
 #include "memory.hpp"
-#include <iostream>
 #include <algorithm>
-#include <exception>
 
 namespace sdlgame::music {
 static memory::SDLUniquePtr<Mix_Music> music;
 
 void load(const fs::path& path) {
-  auto new_music = Mix_LoadMUS(path.string().c_str());
-  if (!new_music) {
-    std::cerr << "Cant load music\n" << Mix_GetError() << '\n';
-    std::terminate();
-  }
-  music.reset(new_music);
+  music.reset(SDL_NEW(Mix_LoadMUS(path.string().c_str())));
 }
 void play(int loop, int fadein_ms) {
   if (!music)
     return;
-  if (Mix_FadeInMusic(music.get(), loop, fadein_ms)) {
-    std::cerr << "Cant play music\n" << Mix_GetError() << '\n';
-  }
+  SDL_CHECK(Mix_FadeInMusic(music.get(), loop, fadein_ms));
 }
 void pause() { Mix_PauseMusic(); }
 void resume() { Mix_ResumeMusic(); }
 void stop() { Mix_HaltMusic(); }
 bool is_playing() { return Mix_PlayingMusic() != 0; }
 double duration() {
-  auto dur = Mix_MusicDuration(music.get());
-  if(dur == -1.0) {
-    std::cerr << "An error occur when trying to get music duration: " << Mix_GetError() << '\n';
-  }  
-  return dur; 
+  return SDL_CHECK(Mix_MusicDuration(music.get())); 
 }
 int convert_volume_value(float value) {
   return static_cast<int>(std::clamp(value, 0.0f, 1.0f) * MIX_MAX_VOLUME);

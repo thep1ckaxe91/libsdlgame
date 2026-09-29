@@ -1,14 +1,18 @@
 #include "color.hpp"
+#include "engine.hpp"
+#include <SDL_keycode.h>
 #include <SDL_pixels.h>
 #include <algorithm>
 #include <array>
+#include <cassert>
 #include <cctype>
 #include <cstdint>
 #include <cstdio>
+#include <exception>
 #include <initializer_list>
 #include <iostream>
 #include <string_view>
-#include <exception>
+#include <unordered_map>
 
 namespace sdlgame::color {
 
@@ -178,8 +182,8 @@ static void to_lowercase(std::string &str) {
                          [](unsigned char c) { return std::tolower(c); });
 }
 
-Color::Color(const std::string &p_name) : a(255) {
-  auto name = p_name;
+Color::Color(std::string_view p_name) : a(255) {
+  std::string name{p_name};
   to_lowercase(name);
   if (name == "none" || name.size() == 0) {
     r = g = b = a = 0;
@@ -219,9 +223,14 @@ Color Color::operator~() const { return {255 - r, 255 - g, 255 - b, a}; }
 
 SDL_Color Color::to_SDL_Color() const { return SDL_Color{r, g, b, a}; }
 /**return uint32_t kind of color with RGBA format*/
-uint32_t Color::toUint32Color() const {
-  static SDL_PixelFormat *format = SDL_AllocFormat(SDL_PIXELFORMAT_RGBA32);
-  return SDL_MapRGBA(format, r, g, b, a);
+uint32_t Color::toUint32Color(uint32_t pixel_format) const {
+  static std::unordered_map<uint32_t, SDL_PixelFormat *> format_cache;
+  if (!format_cache.contains(pixel_format)) {
+    assert(pixel_format != SDL_PIXELFORMAT_UNKNOWN);
+    format_cache[pixel_format] = SDL_NEW(
+        SDL_AllocFormat(pixel_format)); 
+  }
+  return SDL_MapRGBA(format_cache[pixel_format], r, g, b, a);
 }
 std::string Color::toString() {
   char buffer[64];

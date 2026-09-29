@@ -1,4 +1,6 @@
+#include <SDL_pixels.h>
 #include <gtest/gtest.h>
+#include <limits>
 #include "color.hpp"
 
 using namespace sdlgame::color;
@@ -113,8 +115,8 @@ TEST(ColorTest, MemberFunctions) {
     EXPECT_NE(argb_c, 0u);
     EXPECT_NE(argb_c, uint_c); // ARGB8888 will likely have a different int value than RGBA32
     
-    // White-box test for SDL_NEW error handling on SDL_AllocFormat
-    EXPECT_DEATH(c.toUint32Color(SDL_PIXELFORMAT_UNKNOWN), "Failing to Create Resource at: SDL_AllocFormat");
+    EXPECT_DEATH(c.toUint32Color(std::numeric_limits<uint32_t>::max()), "Failing to Create Resource at: SDL_AllocFormat");
+    EXPECT_DEATH(c.toUint32Color(SDL_PIXELFORMAT_UNKNOWN), "");
     
     std::string str_c = c.toString();
     EXPECT_EQ(str_c, "Color(10,20,30,40)");

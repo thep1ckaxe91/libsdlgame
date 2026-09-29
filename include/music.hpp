@@ -1,8 +1,6 @@
 #pragma once
 #ifndef SDLGAME_MUSIC_
 #define SDLGAME_MUSIC_
-#include "SDL2/SDL_mixer.h"
-#include "memory.hpp"
 #include <filesystem>
 
 namespace fs = std::filesystem;

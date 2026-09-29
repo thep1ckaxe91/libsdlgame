@@ -41,7 +41,7 @@ private:
   float volume;
 
 public:
-  Channel(int id);
+  explicit Channel(int id);
   void play(const Sound& sound, int loops = 0, int maxtime_ms = -1, int fade_ms = 0);
   void set_volume(float value);
   int get_volume() const;
@@ -59,7 +59,7 @@ private:
 public:
   memory::SDLSharedPtr<Mix_Chunk> chunk;
   Sound();
-  Sound(const fs::path& path);
+  explicit Sound(const fs::path& path);
   Sound(Sound&&) noexcept;
   Sound &operator=(const Sound &);
   Sound &operator=(Sound&&) noexcept;
