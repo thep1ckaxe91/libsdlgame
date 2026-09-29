@@ -8,30 +8,59 @@ on:
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest
-    
+    name: Build and Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
-    - name: Install dependencies
+    - name: Setup Python for Conan
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+
+    - name: Install Conan
+      run: |
+        python -m pip install --upgrade pip
+        pip install conan
+
+    - name: Setup Conan Profile
+      run: |
+        conan profile detect --force
+
+    - name: Linux specific setup (OpenGL & ALSA)
+      if: runner.os == 'Linux'
       run: |
         sudo apt-get update
-        sudo apt-get install -y cmake g++ python3-pip python3-venv
-        python3 -m venv venv
-        source venv/bin/activate
-        pip3 install conan
-        conan profile detect
+        sudo apt-get install -y libgl1-mesa-dev libasound2-dev libpulse-dev libx11-dev libxext-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev libxss-dev libwayland-dev libxkbcommon-dev
 
-    - name: Install Conan Packages
+    - name: Install Dependencies via Conan
       run: |
-        source venv/bin/activate
         conan install . --build=missing -s build_type=Debug
 
-    - name: Configure CMake
-      run: cmake --preset conan-debug
-
     - name: Build
-      run: cmake --build --preset conan-debug
+      run: |
+        cmake --preset conan-debug
+        cmake --build --preset conan-debug
 
-    - name: Test
-      run: ctest --test-dir build/Debug --output-on-failure
+    - name: Run Tests (Linux/macOS)
+      if: runner.os != 'Windows'
+      env:
+        SDL_VIDEODRIVER: dummy
+        SDL_AUDIODRIVER: dummy
+      run: |
+        cd build/Debug
+        ctest --output-on-failure -j 4
+
+    - name: Run Tests (Windows)
+      if: runner.os == 'Windows'
+      env:
+        SDL_VIDEODRIVER: dummy
+        SDL_AUDIODRIVER: dummy
+      run: |
+        cd build/Debug
+        ctest -C Debug --output-on-failure -j 4
