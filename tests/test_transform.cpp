@@ -1,3 +1,4 @@
+#include <SDL_render.h>
 #include <gtest/gtest.h>
 #include "display.hpp"
 #include "engine.hpp"
@@ -112,7 +113,7 @@ TEST(TransformTest, ScaleByZeroFactorDeath) {
         surface::Surface<SDL_TEXTUREACCESS_TARGET> surf(100, 200);
         // Scaling by zero triggers surface creation error due to zero size
         transform::scale_by(surf, 0.0);
-    }, "Failed to create texture");
+    }, "FATAL: SDL Error");
 }
 
 TEST(TransformTest, ScaleSurfaceDeath) {
@@ -122,18 +123,21 @@ TEST(TransformTest, ScaleSurfaceDeath) {
         surface::Surface<SDL_TEXTUREACCESS_TARGET> surf(100, 200);
         // Negative size should fail in SDL texture creation
         transform::scale(surf, math::Vector2(-50, -50));
-    }, "Failed to create texture");
+    }, "FATAL: SDL Error");
 }
 
 TEST(TransformTest, RotateSurfaceDeath) {
     EXPECT_DEATH({
         sdlgame::init();
         sdlgame::display::set_mode(600,400);
-        surface::Surface<SDL_TEXTUREACCESS_TARGET> surf(100, 200);
-        // Extremely large center distance will create a bounding box exceeding max texture sizes, triggering a creation failure
-        math::Vector2 center(1e9, 1e9); 
-        transform::rotate(surf, 45.0, center);
-    }, "Failed to create texture");
+
+        SDL_RendererInfo info;
+        SDL_GetRendererInfo(sdlgame::display::get_renderer(), &info);
+
+        surface::Surface<SDL_TEXTUREACCESS_TARGET> surf(info.max_texture_width, info.max_texture_height);
+        // rotate at max texture size will 100% cause a size grow, which should case failed at create texture
+        transform::rotate(surf, 45.0);
+    }, "FATAL: SDL Error");
 }
 
 // Additional White-box Tests
@@ -143,7 +147,7 @@ TEST(TransformTest, ScaleByNegativeFactor) {
         sdlgame::display::set_mode(600,400);
         surface::Surface<SDL_TEXTUREACCESS_TARGET> surf(100, 200);
         transform::scale_by(surf, -1.0);
-    }, "Failed to create texture");
+    }, "FATAL: SDL Error");
 }
 
 TEST(TransformTest, RotateSurface360) {
@@ -164,7 +168,7 @@ TEST(TransformTest, ScaleSurfaceZeroSize) {
         sdlgame::display::set_mode(600,400);
         surface::Surface<SDL_TEXTUREACCESS_TARGET> surf(100, 200);
         transform::scale(surf, math::Vector2(0, 0));
-    }, "Failed to create texture");
+    }, "FATAL: SDL Error");
 }
 
 TEST(TransformTest, AccessPatternAny) {
