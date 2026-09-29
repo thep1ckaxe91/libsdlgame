@@ -58,13 +58,13 @@ void Rect::move_ip(double offset_x, double offset_y) {
 /**
  * @return a new rectangle that have been moved by given OFFSET x and y
  */
-Rect Rect::move(math::Vector2 offset) const {
+Rect Rect::move(const math::Vector2 &offset) const {
   return {offset.x + x, offset.y + y, w, h};
 }
 /**
  *  instead of a new one, this just move the rect that called this function
  */
-void Rect::move_ip(math::Vector2 offset) {
+void Rect::move_ip(const math::Vector2 &offset) {
   x += offset.x;
   y += offset.y;
 }
@@ -77,7 +77,7 @@ void Rect::move_ip(math::Vector2 offset) {
 Rect Rect::inflate(double offset_w, double offset_h) const {
   return {x - offset_w / 2, y - offset_h / 2, w + offset_w, h + offset_h};
 }
-Rect Rect::inflate(math::Vector2 offset) const {
+Rect Rect::inflate(const math::Vector2 &offset) const {
   return {x - offset.x / 2, y - offset.y / 2, w + offset.x, h + offset.y};
 }
 /**
@@ -115,13 +115,13 @@ void Rect::update(math::Vector2 pos, double _w, double _h) {
 void Rect::update(math::Vector2 pos, math::Vector2 size) {
   *this = {pos, size};
 }
-/**
- *  return a new rectangle that fit another rect but keep the aspect ratio of
- * the caller the position of the rect that return is the position of the caller
- */
+
 Rect Rect::fit(const Rect &oth) const {
   Rect res = *this;
-  res.setSize(math::Vector2(w, h) * (oth.getWidth() / res.getWidth()));
+  double resize_rat = std::min(oth.getWidth() / res.getWidth(),
+                               oth.getHeight() / res.getHeight());
+  res.setSize(math::Vector2(w, h) * resize_rat);
+  res.setTopLeft(oth.getTopLeft());
   return res;
 }
 /**
@@ -222,9 +222,13 @@ void Rect::setWidth(double _w) { inflate_ip(_w - w, 0); }
 
 void Rect::setHeight(double _h) { inflate_ip(0, _h - h); }
 
-void Rect::setSize(double _w, double _h) { inflate_ip(_w - w, _h - h); }
+void Rect::setSize(double _w, double _h) {
+  w = _w;
+  h = _h;
+}
 void Rect::setSize(const math::Vector2 &_size) {
-  inflate_ip(_size - math::Vector2(w, h));
+  w = _size.x;
+  h = _size.y;
 }
 
 void Rect::setTop(double _y) {
@@ -271,7 +275,7 @@ void Rect::setBottomRight(const math::Vector2 &pos) {
 void Rect::setCenter(double _x, double _y) {
   move_ip(_x - getCenterX(), _y - getCenterY());
 }
-void Rect::setCenter(math::Vector2 pos) {
+void Rect::setCenter(const math::Vector2 &pos) {
   move_ip(pos.x - getCenterX(), pos.y - getCenterY());
 }
 
@@ -313,9 +317,9 @@ double Rect::getCenterY() const { return y + h / 2; }
 math::Vector2 Rect::getSize() const { return {w, h}; }
 math::Vector2 Rect::getCenter() const { return {getCenterX(), getCenterY()}; }
 math::Vector2 Rect::getTopLeft() const { return {x, y}; }
-math::Vector2 Rect::getTopRight() const { return {y, getRight()}; }
-math::Vector2 Rect::getBottomLeft() const { return {getBottom(), x}; }
-math::Vector2 Rect::getBottomRight() const { return {getBottom(), getRight()}; }
+math::Vector2 Rect::getTopRight() const { return {getRight(), y}; }
+math::Vector2 Rect::getBottomLeft() const { return {x, getBottom()}; }
+math::Vector2 Rect::getBottomRight() const { return {getRight(), getBottom()}; }
 math::Vector2 Rect::getMidTop() const { return {getCenterX(), y}; }
 math::Vector2 Rect::getMidLeft() const { return {x, getCenterY()}; }
 math::Vector2 Rect::getMidBottom() const { return {getCenterX(), getBottom()}; }

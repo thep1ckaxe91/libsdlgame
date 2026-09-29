@@ -54,11 +54,11 @@ public:
   /**
    * @return a new rectangle that have been moved by given OFFSET x and y
    */
-  Rect move(math::Vector2 offset) const;
+  Rect move(const math::Vector2& offset) const;
   /**
    *  instead of a new one, this just move the rect that called this function
    */
-  void move_ip(math::Vector2 offset);
+  void move_ip(const math::Vector2& offset);
 
   /**
    * @return a new rectangle that changed the size to given OFFSET, the topleft
@@ -66,7 +66,7 @@ public:
    */
 
   Rect inflate(double offset_w, double offset_h) const;
-  Rect inflate(math::Vector2 offset) const;
+  Rect inflate(const math::Vector2 &offset) const;
   /**
    *  resize current rectangle with given offset, the topleft of the rectangle
    * is remain still
@@ -85,11 +85,7 @@ public:
 
   void update(math::Vector2 pos, double _w, double _h);
   void update(math::Vector2 pos, math::Vector2 _size);
-  /**
-   *  return a new rectangle that fit another rect but keep the aspect ratio of
-   * the caller the position of the rect that return is the position of the
-   * caller
-   */
+  
   Rect fit(const Rect &oth) const;
   /**
    * @return return true if the other rect is completely inside the caller
@@ -146,7 +142,7 @@ public:
   void setBottomRight(const math::Vector2 &pos);
 
   void setCenter(double _x, double _y);
-  void setCenter(math::Vector2 pos);
+  void setCenter(const math::Vector2& pos);
 
   void setMidTop(double _x, double _y);
   void setMidTop(const math::Vector2 &pos);

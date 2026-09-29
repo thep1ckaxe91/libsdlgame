@@ -20,7 +20,7 @@ TEST(KeyDeathTest, InitWithoutSDL) {
     EXPECT_DEATH({
         SDL_Quit(); // Ensure SDL is fully uninitialized to force nullptr
         sdlgame::key::init();
-    }, "FATAL: SDL Error.*Failing to Create Resource at: SDL_GetKeyboardState\\(&numKeys\\)");
+    }, "FATAL: SDL Error*");
 }
 
 TEST(KeyTest, InitCallable) {

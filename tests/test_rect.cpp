@@ -85,10 +85,10 @@ TEST(RectTest, Fit) {
     sdlgame::rect::Rect oth(0.0, 0.0, 20.0, 20.0);  // width 20
     
     sdlgame::rect::Rect fit_rect = r.fit(oth);
-    EXPECT_DOUBLE_EQ(fit_rect.getLeft(), 10.0); // position kept
-    EXPECT_DOUBLE_EQ(fit_rect.getTop(), 10.0);
-    EXPECT_DOUBLE_EQ(fit_rect.getWidth(), 20.0); // 50 * (20 / 50) = 20
-    EXPECT_DOUBLE_EQ(fit_rect.getHeight(), 40.0); // 100 * (20 / 50) = 40
+    EXPECT_DOUBLE_EQ(fit_rect.getLeft(), 0.0); // moved
+    EXPECT_DOUBLE_EQ(fit_rect.getTop(), 0.0);
+    EXPECT_DOUBLE_EQ(fit_rect.getWidth(), 10.0); // keep ratio
+    EXPECT_DOUBLE_EQ(fit_rect.getHeight(), 20.0);
 }
 
 TEST(RectTest, CollideList) {

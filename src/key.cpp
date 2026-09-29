@@ -1,22 +1,18 @@
 #include "key.hpp"
 
 #include "SDL2/SDL_keyboard.h"
+#include <SDL.h>
 #include <cassert>
-#include <iostream>
-#include <exception>
+
+#include "engine.hpp"
 
 namespace sdlgame::key {
 static int numKeys = 0;
 static const uint8_t *keyState = nullptr;
 
 void init() {
-  keyState = SDL_GetKeyboardState(&numKeys);
-
-  if (!keyState) {
-    std::cerr << "Keyboard state pointer is null post-initialization\nDid you "
-                 "call this after SDL init?\n";
-    std::terminate();
-  }
+  SDL_CHECK(-(SDL_WasInit(0) == 0));
+  keyState = SDL_NEW(SDL_GetKeyboardState(&numKeys));
 }
 
 std::span<const uint8_t> get_pressed() {
