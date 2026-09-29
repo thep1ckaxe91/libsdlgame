@@ -1,5 +1,6 @@
 #include "mouse.hpp"
 #include "display.hpp"
+#include "engine.hpp"
 #include "math.hpp"
 #include <SDL2/SDL.h>
 
@@ -9,7 +10,7 @@ math::Vector2 get_pos() {
   int win_x, win_y;
   SDL_GetMouseState(&win_x, &win_y);
   float logicalX, logicalY;
-
+  SDL_NEW(display::get_renderer());
   SDL_RenderWindowToLogical(display::get_renderer(), win_x, win_y, &logicalX,
                             &logicalY);
 
@@ -31,7 +32,7 @@ math::Vector2 get_rel() {
   return {static_cast<double>(x), static_cast<double>(y)};
 }
 void set_visible(bool enable) {
-  SDL_ShowCursor(enable ? SDL_ENABLE : SDL_DISABLE);
+  SDL_CHECK(SDL_ShowCursor(enable ? SDL_ENABLE : SDL_DISABLE));
 }
-bool get_visible() { return SDL_ShowCursor(SDL_QUERY) == SDL_ENABLE; }
+bool get_visible() { return SDL_CHECK(SDL_ShowCursor(SDL_QUERY)) == SDL_ENABLE; }
 } // namespace sdlgame::mouse
