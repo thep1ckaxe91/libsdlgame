@@ -40,7 +40,7 @@ jobs:
 
     - name: Install Dependencies via Conan
       run: |
-        conan install . --build=missing -s build_type=Debug
+        conan install . --build=missing -s build_type=Debug -s:b compiler.version=13 -s:b compiler.cppstd=20
 
     - name: Build
       run: |
