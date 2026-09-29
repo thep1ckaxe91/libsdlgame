@@ -155,60 +155,90 @@ TEST_F(DrawTest, DrawCircleRadiusNegativeWidthNotZero) {
 }
 
 
-TEST_F(DrawTest, DrawRectDeathOnError) {
-    sdlgame::color::Color color(255, 0, 0, 255);
-    sdlgame::rect::Rect rect(10, 10, 50, 50);
-    EXPECT_DEATH({
-        sdlgame::quit();
-        sdlgame::draw::rect(surf, color, rect, 1);
-    }, "FATAL: SDL Error");
-}
 
-TEST_F(DrawTest, DrawLineDeathOnError) {
-    sdlgame::color::Color color(0, 255, 0, 255);
-    EXPECT_DEATH({
-        sdlgame::quit();
-        sdlgame::draw::line(surf, color, 0.0, 0.0, 100.0, 100.0);
-    }, "FATAL: SDL Error");
-}
 
-TEST_F(DrawTest, DrawCircleDeathOnError) {
-    sdlgame::color::Color color(255, 255, 0, 255);
-    EXPECT_DEATH({
-        sdlgame::quit();
-        sdlgame::draw::circle(surf, color, 50, 50, 20, 2);
-    }, "FATAL: SDL Error");
-}
 
-TEST_F(DrawTest, DrawPolygonDeathOnError) {
-    sdlgame::color::Color color(0, 255, 255, 255);
-    std::vector<sdlgame::math::Vector2> pts = {
-        sdlgame::math::Vector2(10.0, 10.0),
-        sdlgame::math::Vector2(20.0, 10.0),
-        sdlgame::math::Vector2(15.0, 20.0)
+
+
+
+TEST(DrawDeathTest, DrawRectDeathOnError) {
+    auto test_func = []() {
+        sdlgame::init();
+        sdlgame::display::set_mode(600, 400);
+        auto surf = new sdlgame::surface::Surface<SDL_TEXTUREACCESS_TARGET>(100, 100);
+        sdlgame::color::Color color(255, 0, 0, 255);
+        sdlgame::rect::Rect rect(10, 10, 50, 50);
+        sdlgame::quit();
+        sdlgame::draw::rect(*surf, color, rect, 1);
     };
-    EXPECT_DEATH({
-        sdlgame::quit();
-        sdlgame::draw::polygon(surf, color, pts);
-    }, "FATAL: SDL Error");
+    EXPECT_DEATH(test_func(), "FATAL: SDL Error");
 }
 
-TEST_F(DrawTest, DrawPointDeathOnError) {
-    sdlgame::color::Color color(255, 0, 255, 255);
-    EXPECT_DEATH({
+TEST(DrawDeathTest, DrawLineDeathOnError) {
+    auto test_func = []() {
+        sdlgame::init();
+        sdlgame::display::set_mode(600, 400);
+        auto surf = new sdlgame::surface::Surface<SDL_TEXTUREACCESS_TARGET>(100, 100);
+        sdlgame::color::Color color(0, 255, 0, 255);
         sdlgame::quit();
-        sdlgame::draw::point(surf, color, 50.0, 50.0);
-    }, "FATAL: SDL Error");
-}
-
-TEST_F(DrawTest, DrawPointsDeathOnError) {
-    sdlgame::color::Color color(255, 0, 255, 255);
-    std::vector<sdlgame::math::Vector2> pts = {
-        sdlgame::math::Vector2(10.0, 10.0),
-        sdlgame::math::Vector2(20.0, 20.0)
+        sdlgame::draw::line(*surf, color, 0.0, 0.0, 100.0, 100.0);
     };
-    EXPECT_DEATH({
+    EXPECT_DEATH(test_func(), "FATAL: SDL Error");
+}
+
+TEST(DrawDeathTest, DrawCircleDeathOnError) {
+    auto test_func = []() {
+        sdlgame::init();
+        sdlgame::display::set_mode(600, 400);
+        auto surf = new sdlgame::surface::Surface<SDL_TEXTUREACCESS_TARGET>(100, 100);
+        sdlgame::color::Color color(255, 255, 0, 255);
         sdlgame::quit();
-        sdlgame::draw::points(surf, color, pts);
-    }, "FATAL: SDL Error");
+        sdlgame::draw::circle(*surf, color, 50, 50, 20, 2);
+    };
+    EXPECT_DEATH(test_func(), "FATAL: SDL Error");
+}
+
+TEST(DrawDeathTest, DrawPolygonDeathOnError) {
+    auto test_func = []() {
+        sdlgame::init();
+        sdlgame::display::set_mode(600, 400);
+        auto surf = new sdlgame::surface::Surface<SDL_TEXTUREACCESS_TARGET>(100, 100);
+        sdlgame::color::Color color(0, 255, 255, 255);
+        std::vector<sdlgame::math::Vector2> pts = {
+            sdlgame::math::Vector2(10.0, 10.0),
+            sdlgame::math::Vector2(20.0, 10.0),
+            sdlgame::math::Vector2(15.0, 20.0)
+        };
+        sdlgame::quit();
+        sdlgame::draw::polygon(*surf, color, pts);
+    };
+    EXPECT_DEATH(test_func(), "FATAL: SDL Error");
+}
+
+TEST(DrawDeathTest, DrawPointDeathOnError) {
+    auto test_func = []() {
+        sdlgame::init();
+        sdlgame::display::set_mode(600, 400);
+        auto surf = new sdlgame::surface::Surface<SDL_TEXTUREACCESS_TARGET>(100, 100);
+        sdlgame::color::Color color(255, 0, 255, 255);
+        sdlgame::quit();
+        sdlgame::draw::point(*surf, color, 50.0, 50.0);
+    };
+    EXPECT_DEATH(test_func(), "FATAL: SDL Error");
+}
+
+TEST(DrawDeathTest, DrawPointsDeathOnError) {
+    auto test_func = []() {
+        sdlgame::init();
+        sdlgame::display::set_mode(600, 400);
+        auto surf = new sdlgame::surface::Surface<SDL_TEXTUREACCESS_TARGET>(100, 100);
+        sdlgame::color::Color color(255, 0, 255, 255);
+        std::vector<sdlgame::math::Vector2> pts = {
+            sdlgame::math::Vector2(10.0, 10.0),
+            sdlgame::math::Vector2(20.0, 20.0)
+        };
+        sdlgame::quit();
+        sdlgame::draw::points(*surf, color, pts);
+    };
+    EXPECT_DEATH(test_func(), "FATAL: SDL Error");
 }
