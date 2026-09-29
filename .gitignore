@@ -1,1 +1,74 @@
-build/
+.vscode
+[Bb]uild/
+build-*/
+cmake-build-*/
+out/
+
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+
+CMakeUserPresets.json
+
+# ==============================================================================
+# Compiled Binaries, Libraries, and Object Files
+# ==============================================================================
+# Executables
+*.exe
+*.out
+*.app
+
+# Object files and precompiled headers
+*.o
+*.obj
+*.gch
+*.pch
+*.slo
+*.lo
+
+# Static and dynamic libraries
+*.a
+*.lib
+*.so
+*.dylib
+*.dll
+*.la
+*.lai
+
+# Debug symbols and maps
+*.pdb
+*.idb
+*.ilk
+*.map
+
+# ==============================================================================
+# IDEs and Text Editors
+# ==============================================================================
+# Visual Studio
+.vs/
+
+# CLion / IntelliJ IDEA
+.idea/
+*.iws
+
+# Qt Creator
+CMakeLists.txt.user*
+
+# Xcode
+*.xcodeproj/
+*.xcworkspace/
+
+# Editor swap files
+*.swp
+*.swo
+*~
+
+# ==============================================================================
+# Operating System Artifacts
+# ==============================================================================
+.DS_Store
+Thumbs.db
