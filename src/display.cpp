@@ -1,58 +1,49 @@
 #include "display.hpp"
 #include "SDL2/SDL_hints.h"
 #include "SDL2/SDL_image.h"
+#include "engine.hpp"
 #include "math.hpp"
 #include "memory.hpp"
 #include "surface.hpp"
-#include <iostream>
+#include <SDL_render.h>
+#include <SDL_stdinc.h>
 #include <exception>
+#include <iostream>
 
 namespace sdlgame::display {
 namespace {
 sdlgame::memory::SDLUniquePtr<SDL_Window> window = nullptr;
 sdlgame::memory::SDLUniquePtr<SDL_Renderer> renderer = nullptr;
 
-sdlgame::surface::Surface proxy_surf;
+sdlgame::surface::Surface<SDL_TEXTUREACCESS_TARGET> proxy_surf;
 math::Vector2 resolution;
 } // namespace
 
-/**
- * Setup a window surface for use
- * @param width the resolution width of the window
- * @param height the resolution height of the window
- * @param flags flags for the window, look for Window_Flags enum for more
- * @return a surface that represent the window, what action affect this window
- * will affect what display on screen
- */
-sdlgame::surface::Surface &set_mode(int width, int height, uint32_t flags) {
+sdlgame::surface::Surface<SDL_TEXTUREACCESS_TARGET> &
+set_mode(int width, int height, uint32_t flags) {
   if (width == 0 || height == 0) {
     SDL_DisplayMode DM;
-    SDL_GetDesktopDisplayMode(0, &DM);
+    SDL_CHECK(SDL_GetDesktopDisplayMode(0, &DM));
     width = DM.w;
     height = DM.h;
+  }
+  if(width < 0 || height < 0 || width > (1 << 14) || height > (1 << 14)) {
+    std::cerr << "Can't initialize window with negative/too large size\n";
+    std::terminate();
   }
 
   resolution = math::Vector2(width, height);
 
   SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
 
-  window.reset(SDL_CreateWindow("SDLgame", SDL_WINDOWPOS_CENTERED,
-                                SDL_WINDOWPOS_CENTERED, width, height, flags));
+  window.reset(
+      SDL_NEW(SDL_CreateWindow("SDLgame", SDL_WINDOWPOS_CENTERED,
+                               SDL_WINDOWPOS_CENTERED, width, height, flags)));
 
-  if (!window) {
-    std::cerr << "Fatal: Window creation failed: " << SDL_GetError() << "\n";
-    std::terminate();
-  }
+  renderer.reset(SDL_NEW(SDL_CreateRenderer(
+      window.get(), -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC)));
 
-  renderer.reset(SDL_CreateRenderer(
-      window.get(), -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC));
-
-  if (!renderer) {
-    std::cerr << "Fatal: Renderer creation failed: " << SDL_GetError() << "\n";
-    std::terminate();
-  }
-
-  SDL_RenderSetLogicalSize(renderer.get(), width, height);
+  SDL_CHECK(SDL_RenderSetLogicalSize(renderer.get(), width, height));
 
   // Fulfill the Pygame syntax requirement
   proxy_surf.size = math::Vector2(width, height);
@@ -67,26 +58,29 @@ bool set_render_scale_quality(bool linear) {
                                  SDL_HINT_OVERRIDE);
 }
 void maximize() {
-  SDL_SetWindowFullscreen(window.get(), 0);
+  SDL_CHECK(SDL_SetWindowFullscreen(window.get(), 0));
   SDL_MaximizeWindow(window.get());
 }
 
 void minimize() {
-  SDL_SetWindowFullscreen(window.get(), 0);
+  SDL_CHECK(SDL_SetWindowFullscreen(window.get(), 0));
   SDL_MinimizeWindow(window.get());
 }
 void restore() {
-  SDL_SetWindowFullscreen(window.get(), 0);
+  SDL_CHECK(SDL_SetWindowFullscreen(window.get(), 0));
   SDL_RestoreWindow(window.get());
 }
 void fullscreen() {
-  SDL_SetWindowFullscreen(window.get(), SDL_WINDOW_FULLSCREEN);
+  SDL_CHECK(SDL_SetWindowFullscreen(window.get(), SDL_WINDOW_FULLSCREEN));
 }
 bool is_fullscreen() {
   return (SDL_GetWindowFlags(window.get()) & SDL_WINDOW_FULLSCREEN_DESKTOP) ||
          (SDL_GetWindowFlags(window.get()) & SDL_WINDOW_FULLSCREEN);
 }
-void set_window_size(int w, int h) { SDL_SetWindowSize(window.get(), w, h); }
+void set_window_size(int w, int h) {
+  SDL_SetWindowSize(window.get(), w, h);
+  proxy_surf.size = {static_cast<double>(w), static_cast<double>(h)};
+}
 // set position of window, use sdlgame::WINDOWPOS_CENTERED if you need center
 void set_window_pos(int x, int y) { SDL_SetWindowPosition(window.get(), x, y); }
 std::pair<int, int> get_window_pos() {
@@ -102,9 +96,12 @@ math::Vector2 get_window_size() {
 }
 
 void fullscreen_desktop() {
-  SDL_SetWindowFullscreen(window.get(), SDL_WINDOW_FULLSCREEN_DESKTOP);
+  SDL_CHECK(
+      SDL_SetWindowFullscreen(window.get(), SDL_WINDOW_FULLSCREEN_DESKTOP));
 }
-sdlgame::surface::Surface &get_surf() { return proxy_surf; }
+sdlgame::surface::Surface<SDL_TEXTUREACCESS_TARGET> &get_surf() {
+  return proxy_surf;
+}
 
 double get_width() {
   if (proxy_surf.get_width() == 0) {
@@ -128,13 +125,13 @@ double get_height() {
 bool grab(int enable) {
   if (enable == -1)
     return SDL_GetWindowGrab(window.get());
-  SDL_SetWindowGrab(window.get(), (enable ? SDL_TRUE : SDL_FALSE));
+  SDL_SetWindowGrab(window.get(), static_cast<SDL_bool>(enable));
   return enable;
 }
 
 void set_icon(const fs::path &icon_path) {
   sdlgame::memory::SDLUniquePtr<SDL_Surface> icon(
-      IMG_Load(icon_path.string().c_str()));
+      SDL_NEW(IMG_Load(icon_path.string().c_str())));
   SDL_SetWindowIcon(window.get(), icon.get());
 }
 
@@ -157,7 +154,7 @@ void quit() {
   renderer.reset();
 }
 void flip() {
-  SDL_SetRenderTarget(renderer.get(), nullptr);
+  SDL_CHECK(SDL_SetRenderTarget(renderer.get(), nullptr));
   SDL_RenderPresent(renderer.get());
 }
 } // namespace sdlgame::display

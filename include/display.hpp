@@ -1,12 +1,13 @@
 #pragma once
+#include "math.hpp"
+#include <SDL_render.h>
+#include <filesystem>
 #ifndef SDLGAME_DISPLAY_
 #define SDLGAME_DISPLAY_
-#include "SDL2/SDL_render.h"
-#include "SDL2/SDL_video.h"
-#include "math.hpp"
-#include "surface.hpp"
-#include <filesystem>
-namespace fs = std::filesystem;
+
+namespace sdlgame::surface {
+template <SDL_TextureAccess AP> class Surface;
+}
 
 namespace sdlgame::display {
 
@@ -18,8 +19,8 @@ namespace sdlgame::display {
  * @return a surface that represent the window, what action affect this window
  * will affect what display on screen
  */
-sdlgame::surface::Surface &set_mode(int width = 0, int height = 0,
-                                    Uint32 flags = 0);
+sdlgame::surface::Surface<SDL_TEXTUREACCESS_TARGET> &
+set_mode(int width = 0, int height = 0, Uint32 flags = 0);
 /**
  * Maximize the active window
  */
@@ -32,7 +33,7 @@ void restore();
 void fullscreen();
 void fullscreen_desktop();
 bool is_fullscreen();
-sdlgame::surface::Surface &get_surf();
+sdlgame::surface::Surface<SDL_TEXTUREACCESS_TARGET> &get_surf();
 // get the actual size in pixel of the window
 math::Vector2 get_window_size();
 // set client window area, not resolution
@@ -56,13 +57,13 @@ bool set_render_scale_quality(bool linear);
  */
 bool grab(int enable = -1);
 
-void set_icon(const fs::path &icon_path);
+void set_icon(const std::filesystem::path &icon_path);
 
 /**
  *  get and set the borderless state of the active window;
  */
 bool borderless(int enable = -1);
-void set_caption(const std::string& title);
+void set_caption(const std::string &title);
 SDL_Window *get_window();
 SDL_Renderer *get_renderer();
 void quit();

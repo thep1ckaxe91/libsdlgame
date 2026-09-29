@@ -1,5 +1,10 @@
+#include "gtest/gtest.h"
+#include <SDL_events.h>
 #include <gtest/gtest.h>
+#include "constants.hpp"
 #include "display.hpp"
+#include "engine.hpp"
+#include "event.hpp"
 #include "math.hpp"
 #include "surface.hpp"
 #include <string>
@@ -9,6 +14,7 @@ using namespace sdlgame;
 TEST(DisplayTest, SetModeAndSize) {
     // Simply test that the function signatures are as expected.
     // We call set_mode to initialize the display surface.
+    init();
     auto& surf = display::set_mode(800, 600, 0);
     
     double w = display::get_width();
@@ -24,6 +30,9 @@ TEST(DisplayTest, SetModeAndSize) {
 }
 
 TEST(DisplayTest, WindowStates) {
+
+    init();
+    display::set_mode(600,400, sdlgame::RESIZABLE);
     // Test the window state toggles.
     display::maximize();
     display::minimize();
@@ -50,6 +59,8 @@ TEST(DisplayTest, WindowProperties) {
 }
 
 TEST(DisplayTest, RenderContextAndCleanup) {
+    init();
+    display::set_mode(600,400);
     // Test rendering configuration and context getters.
     bool scale_set = display::set_render_scale_quality(true);
     
@@ -73,6 +84,7 @@ TEST(DisplayDeathTest, UninitializedDisplayHeight) {
 
 TEST(DisplayTest, SetModeDesktopFallback) {
     // Testing logic branch where width=0, height=0 uses desktop display mode
+    sdlgame::init();
     display::set_mode();
     EXPECT_GT(display::get_width(), 0.0);
     EXPECT_GT(display::get_height(), 0.0);
@@ -89,22 +101,25 @@ TEST(DisplayTest, SetModeDesktopFallback) {
 }
 
 TEST(DisplayDeathTest, SetModeInvalidSize) {
-    // Passing extremely large/invalid dimensions should cause SDL_CreateWindow or SDL_CreateRenderer to fail,
-    // which triggers SDL_NEW macro's termination
-    EXPECT_DEATH(display::set_mode(-1000, -1000, 0), "FATAL: SDL Error");
+    EXPECT_DEATH(display::set_mode(-1000, -1000, 0), "Can't initialize window with negative/too large size");
+    EXPECT_DEATH(display::set_mode(0x7fffffff,0x7fffffff, 0), "Can't initialize window with negative/too large size");
 }
 
 TEST(DisplayTest, GrabLogicBranches) {
-    display::set_mode();
+    init();
+    display::set_mode(600,400);
     
     display::grab(1);
+    SDL_PumpEvents();
     EXPECT_TRUE(display::grab());
     
     display::grab(0);
+    SDL_PumpEvents();
     EXPECT_FALSE(display::grab());
 }
 
 TEST(DisplayTest, BorderlessLogicBranches) {
+    init();
     display::set_mode();
     
     display::borderless(1);
@@ -142,6 +157,7 @@ TEST(DisplayTest, GetWindowSizeSideEffect) {
 }
 
 TEST(DisplayTest, RenderScaleQualityBranches) {
+    sdlgame::init();
     display::set_mode(800, 600);
     
     // Testing the true branch
@@ -151,12 +167,14 @@ TEST(DisplayTest, RenderScaleQualityBranches) {
 }
 
 TEST(DisplayDeathTest, SetIconInvalidPath) {
+    init();
     display::set_mode(800, 600);
     // Now uses SDL_NEW, so it should terminate if the path is invalid
     EXPECT_DEATH(display::set_icon("non_existent_file.png"), "FATAL: SDL Error");
 }
 
 TEST(DisplayTest, DisplayGetters) {
+    init();
     display::set_mode(800, 600);
     EXPECT_NE(display::get_window(), nullptr);
     EXPECT_NE(display::get_renderer(), nullptr);
