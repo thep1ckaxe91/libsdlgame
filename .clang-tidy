@@ -1,0 +1,7 @@
+# .clang-tidy
+Checks: >
+  -*,
+  google-*,
+  bugprone-*,
+  performance-*
+WarningsAsErrors: ''

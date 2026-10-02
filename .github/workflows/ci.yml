@@ -32,35 +32,35 @@ jobs:
       run: |
         conan profile detect --force
 
-    - name: Linux specific setup (OpenGL & ALSA)
+    - name: Linux specific setup (OpenGL & ALSA & Xvfb)
       if: runner.os == 'Linux'
       run: |
         sudo apt-get update
-        sudo apt-get install -y libgl1-mesa-dev libasound2-dev libpulse-dev libx11-dev libxext-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev libxss-dev libwayland-dev libxkbcommon-dev
+        sudo apt-get install -y xvfb libgl1-mesa-dev libasound2-dev libpulse-dev libx11-dev libxext-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev libxss-dev libwayland-dev libxkbcommon-dev libx11-xcb-dev libfontenc-dev libice-dev libsm-dev libxaw7-dev libxcomposite-dev libxdamage-dev libxkbfile-dev libxmu-dev libxmuu-dev libxpm-dev libxres-dev libxt-dev libxtst-dev libxv-dev libxxf86vm-dev libxcb-glx0-dev libxcb-render0-dev libxcb-render-util0-dev libxcb-xkb-dev libxcb-icccm4-dev libxcb-image0-dev libxcb-keysyms1-dev libxcb-randr0-dev libxcb-shape0-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-xinerama0-dev libxcb-dri3-dev libxcb-cursor-dev libxcb-dri2-0-dev libxcb-dri3-dev libxcb-present-dev libxcb-composite0-dev libxcb-ewmh-dev libxcb-res0-dev
 
     - name: Install Dependencies via Conan
       run: |
-        conan install . --build=missing -s build_type=Debug -s:b compiler.version=13 -s:b compiler.cppstd=20
+        conan install . --build=missing -s build_type=Debug -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True
 
     - name: Build
       run: |
         cmake --preset conan-debug
         cmake --build --preset conan-debug
 
-    - name: Run Tests (Linux/macOS)
-      if: runner.os != 'Windows'
-      env:
-        SDL_VIDEODRIVER: dummy
-        SDL_AUDIODRIVER: dummy
+    - name: Run Tests (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        cd build/Debug
+        xvfb-run -a ctest --output-on-failure -j 4
+
+    - name: Run Tests (macOS)
+      if: runner.os == 'macOS'
       run: |
         cd build/Debug
         ctest --output-on-failure -j 4
 
     - name: Run Tests (Windows)
       if: runner.os == 'Windows'
-      env:
-        SDL_VIDEODRIVER: dummy
-        SDL_AUDIODRIVER: dummy
       run: |
         cd build/Debug
         ctest -C Debug --output-on-failure -j 4
