@@ -27,7 +27,7 @@ set_mode(int width, int height, uint32_t flags) {
     width = DM.w;
     height = DM.h;
   }
-  if(width < 0 || height < 0 || width > (1 << 14) || height > (1 << 14)) {
+  if (width < 0 || height < 0 || width > (1 << 14) || height > (1 << 14)) {
     std::cerr << "Can't initialize window with negative/too large size\n";
     std::terminate();
   }
@@ -51,9 +51,10 @@ set_mode(int width, int height, uint32_t flags) {
 }
 
 bool set_render_scale_quality(bool linear) {
-  if (linear)
+  if (linear) {
     return SDL_SetHintWithPriority(SDL_HINT_RENDER_SCALE_QUALITY, "linear",
                                    SDL_HINT_OVERRIDE);
+  }
   return SDL_SetHintWithPriority(SDL_HINT_RENDER_SCALE_QUALITY, "nearest",
                                  SDL_HINT_OVERRIDE);
 }
@@ -123,8 +124,9 @@ double get_height() {
  *
  */
 bool grab(int enable) {
-  if (enable == -1)
+  if (enable == -1) {
     return SDL_GetWindowGrab(window.get());
+  }
   SDL_SetWindowGrab(window.get(), static_cast<SDL_bool>(enable));
   return enable;
 }
@@ -139,8 +141,9 @@ void set_icon(const fs::path &icon_path) {
  *  get and set the borderless state of the active window;
  */
 bool borderless(int enable) {
-  if (enable == -1)
+  if (enable == -1) {
     return (SDL_GetWindowFlags(window.get()) & SDL_WINDOW_BORDERLESS);
+  }
   SDL_SetWindowBordered(window.get(), (enable ? SDL_FALSE : SDL_TRUE));
   return (SDL_GetWindowFlags(window.get()) & SDL_WINDOW_BORDERLESS) > 0;
 }

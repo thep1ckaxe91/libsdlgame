@@ -5,8 +5,9 @@ static std::random_device rd;
 static std::mt19937 engine = std::mt19937(rd());
 
 int randint(int l, int r) {
-  if (l > r)
+  if (l > r) {
     std::swap(l, r);
+}
   std::uniform_int_distribution<> tmp(l, r);
   return tmp(engine);
 }

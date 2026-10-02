@@ -8,7 +8,7 @@ namespace sdlgame::event {
 namespace {
 Event tmp;
 constexpr int EVENT_POLL_LIMIT = 100;
-}
+} // namespace
 Event::Event() : type(0), timestamp(0) {}
 Event::Event(SDL_Event e) : sdl_event(e) {
   type = e.type;
@@ -35,7 +35,7 @@ Event::Event(SDL_Event e) : sdl_event(e) {
   }
 }
 
-int64_t Event::operator[](const std::string& key) const {
+int64_t Event::operator[](const std::string &key) const {
   if (dict.contains(key)) {
     return dict.at(key);
   }
@@ -52,8 +52,9 @@ std::vector<Event> &get() {
 
   SDL_Event e;
   for (int i = 0; i < EVENT_POLL_LIMIT; i++) {
-    if (!SDL_PollEvent(&e))
+    if (!SDL_PollEvent(&e)) {
       break;
+    }
     current_events.push_back(Event(e));
   }
   return current_events;

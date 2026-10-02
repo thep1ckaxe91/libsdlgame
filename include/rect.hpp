@@ -3,9 +3,13 @@
 #define SDLGAME_RECT_
 #include "SDL2/SDL_rect.h"
 #include "math.hpp"
+#include <concepts>
 #include <optional>
 #include <string>
 #include <vector>
+
+template <typename T>
+concept Arithmetic = std::floating_point<T> || std::integral<T>;
 
 namespace sdlgame::rect {
 /**
@@ -31,11 +35,16 @@ private:
 public:
   Rect() = default;
 
-  Rect(double _left, double _top, double _w, double _h);
+  Rect(Arithmetic auto _left, Arithmetic auto _top, Arithmetic auto _w,
+       Arithmetic auto _h)
+      : x(_left), y(_top), w(_w), h(_h) {}
 
-  Rect(double _left, double _top, math::Vector2 _size);
+  Rect(Arithmetic auto _left, Arithmetic auto _top, math::Vector2 _size)
+      : x(_left), y(_top), w(_size.x), h(_size.y) {}
 
-  Rect(math::Vector2 pos, double _w, double _h);
+  Rect(math::Vector2 pos, Arithmetic auto _w, Arithmetic auto _h)
+      : x(pos.x), y(pos.y), w(_w), h(_h) {}
+
   Rect(math::Vector2 pos, math::Vector2 size);
 
   Rect(const Rect &oth) = default;
@@ -54,11 +63,11 @@ public:
   /**
    * @return a new rectangle that have been moved by given OFFSET x and y
    */
-  Rect move(const math::Vector2& offset) const;
+  Rect move(const math::Vector2 &offset) const;
   /**
    *  instead of a new one, this just move the rect that called this function
    */
-  void move_ip(const math::Vector2& offset);
+  void move_ip(const math::Vector2 &offset);
 
   /**
    * @return a new rectangle that changed the size to given OFFSET, the topleft
@@ -85,7 +94,7 @@ public:
 
   void update(math::Vector2 pos, double _w, double _h);
   void update(math::Vector2 pos, math::Vector2 _size);
-  
+
   Rect fit(const Rect &oth) const;
   /**
    * @return return true if the other rect is completely inside the caller
@@ -142,7 +151,7 @@ public:
   void setBottomRight(const math::Vector2 &pos);
 
   void setCenter(double _x, double _y);
-  void setCenter(const math::Vector2& pos);
+  void setCenter(const math::Vector2 &pos);
 
   void setMidTop(double _x, double _y);
   void setMidTop(const math::Vector2 &pos);

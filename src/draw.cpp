@@ -39,19 +39,6 @@ void rect(sdlgame::surface::Surface<SDL_TEXTUREACCESS_TARGET> &surface,
 }
 
 void line(sdlgame::surface::Surface<SDL_TEXTUREACCESS_TARGET> &surface,
-          sdlgame::color::Color color, double x1, double y1, double x2,
-          double y2) {
-  SDL_CHECK(SDL_SetRenderTarget(sdlgame::display::get_renderer(),
-                                surface.getTexture()));
-  SDL_CHECK(SDL_SetRenderDrawColor(sdlgame::display::get_renderer(), color.r,
-                                   color.g, color.b, color.a));
-
-  SDL_CHECK(SDL_RenderDrawLineF(
-      sdlgame::display::get_renderer(), static_cast<float>(x1),
-      static_cast<float>(y1), static_cast<float>(x2), static_cast<float>(y2)));
-  SDL_CHECK(SDL_SetRenderTarget(sdlgame::display::get_renderer(), nullptr));
-}
-void line(sdlgame::surface::Surface<SDL_TEXTUREACCESS_TARGET> &surface,
           sdlgame::color::Color color, math::Vector2 start, math::Vector2 end) {
   SDL_CHECK(SDL_SetRenderTarget(sdlgame::display::get_renderer(),
                                 surface.getTexture()));
@@ -64,43 +51,14 @@ void line(sdlgame::surface::Surface<SDL_TEXTUREACCESS_TARGET> &surface,
       static_cast<float>(end.y)));
   SDL_CHECK(SDL_SetRenderTarget(sdlgame::display::get_renderer(), nullptr));
 }
-void circle(sdlgame::surface::Surface<SDL_TEXTUREACCESS_TARGET> &surface,
-            sdlgame::color::Color color, int centerX, int centerY, int radius,
-            int width) {
-  SDL_CHECK(SDL_SetRenderTarget(sdlgame::display::get_renderer(),
-                                surface.getTexture()));
-  SDL_CHECK(SDL_SetRenderDrawColor(sdlgame::display::get_renderer(), color.r,
-                                   color.g, color.b, color.a));
 
-  if (width != 0) {
-    int quality = 90;
-    math::Vector2 rad(radius, 0);
-    for (int i = 0; i <= quality; i++) {
-      math::Vector2 next = rad.rotate(360.0 / static_cast<double>(quality));
-      SDL_CHECK(SDL_RenderDrawLineF(sdlgame::display::get_renderer(),
-                                    static_cast<float>(centerX + rad.x),
-                                    static_cast<float>(centerY + rad.y),
-                                    static_cast<float>(centerX + next.x),
-                                    static_cast<float>(centerY + next.y)));
-      rad = next;
-    }
-  } else {
-    for (int i = -radius; i <= radius; i++) {
-      double x = radius * std::cos(std::asin(i * 1.0 / radius));
-      SDL_CHECK(SDL_RenderDrawLineF(
-          sdlgame::display::get_renderer(), static_cast<float>(x + centerX),
-          static_cast<float>(i + centerY), static_cast<float>(centerX - x),
-          static_cast<float>(i + centerY)));
-    }
-  }
-  SDL_CHECK(SDL_SetRenderTarget(sdlgame::display::get_renderer(), nullptr));
-}
 void polygon(sdlgame::surface::Surface<SDL_TEXTUREACCESS_TARGET> &surface,
              sdlgame::color::Color color,
              const std::vector<math::Vector2> &points) {
-  if (points.size() < 3)
+  if (points.size() < 3) {
     throw std::invalid_argument(
         "can't draw polygon with only 2 vertices or less");
+  }
   for (size_t i{0}; i < points.size() - 1; i++) {
     line(surface, color, points[i], points[i + 1]);
   }
@@ -121,15 +79,17 @@ void point(sdlgame::surface::Surface<SDL_TEXTUREACCESS_TARGET> &surface,
 void points(sdlgame::surface::Surface<SDL_TEXTUREACCESS_TARGET> &surface,
             sdlgame::color::Color color,
             const std::vector<math::Vector2> &v_points) {
-  if (v_points.empty())
-    return; 
+  if (v_points.empty()) {
+    return;
+  }
   SDL_CHECK(SDL_SetRenderTarget(sdlgame::display::get_renderer(),
                                 surface.getTexture()));
   SDL_CHECK(SDL_SetRenderDrawColor(sdlgame::display::get_renderer(), color.r,
                                    color.g, color.b, color.a));
   std::vector<SDL_FPoint> sdl_points(v_points.size());
-  for (size_t i = 0; i < v_points.size(); i++)
+  for (size_t i = 0; i < v_points.size(); i++) {
     sdl_points[i] = v_points[i].to_SDL_FPoint();
+  }
   SDL_CHECK(SDL_RenderDrawPointsF(sdlgame::display::get_renderer(),
                                   sdl_points.data(),
                                   static_cast<int>(v_points.size())));

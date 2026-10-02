@@ -80,8 +80,9 @@ surface::Surface<To>
 rotate(const surface::Surface<From> &surface, double angle_deg,
        std::optional<math::Vector2> o_center = std::nullopt) {
   math::Vector2 center = surface.get_size() / 2;
-  if (o_center.has_value())
+  if (o_center.has_value()) {
     center = o_center.value();
+}
 
   math::Vector2 newtopleft =
       (surface.get_rect().getTopLeft() - center).rotate(angle_deg);
@@ -105,7 +106,7 @@ rotate(const surface::Surface<From> &surface, double angle_deg,
   SDL_CHECK(
       SDL_SetRenderTarget(sdlgame::display::get_renderer(), res.getTexture()));
 
-  SDL_FPoint tmp = {float(center.x), float(center.y)};
+  SDL_FPoint tmp = {static_cast<float>(center.x), static_cast<float>(center.y)};
   SDL_CHECK(
       SDL_SetRenderDrawColor(sdlgame::display::get_renderer(), 0, 0, 0, 0));
   SDL_CHECK(SDL_RenderClear(sdlgame::display::get_renderer()));

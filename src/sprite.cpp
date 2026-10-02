@@ -10,8 +10,9 @@ std::span<const std::shared_ptr<Sprite>> Group::sprites() const {
   return m_sprites;
 }
 void Group::add(const std::shared_ptr<Sprite> &sprite) {
-  if (!sprite)
+  if (!sprite) {
     return;
+  }
 
   auto it = std::ranges::find(m_sprites, sprite);
 
@@ -67,8 +68,9 @@ Sprite::Sprite(
     : m_rect(image->get_rect()), m_image(image) {}
 
 std::span<const std::shared_ptr<Group>> Sprite::groups() const {
-  if (!m_cache_dirty)
+  if (!m_cache_dirty) {
     return m_groups_cache;
+  }
 
   m_groups_cache.clear();
   m_groups_cache.reserve(m_groups.size());
@@ -111,13 +113,15 @@ const surface::Surface<SDL_TEXTUREACCESS_STATIC> &Sprite::get_image() const {
 }
 
 GroupSingle::GroupSingle(const std::shared_ptr<Sprite> &sprite) {
-  if (sprite)
+  if (sprite) {
     this->add(sprite);
+  }
 }
 
 void GroupSingle::add(const std::shared_ptr<Sprite> &sprite) {
-  if (!sprite)
+  if (!sprite) {
     return;
+  }
 
   if (!m_sprites.empty()) {
     Group::remove(m_sprites.back());
@@ -127,8 +131,9 @@ void GroupSingle::add(const std::shared_ptr<Sprite> &sprite) {
 }
 
 void GroupSingle::remove() {
-  if (!m_sprites.empty())
+  if (!m_sprites.empty()) {
     Group::remove(m_sprites.back());
+  }
 }
 
 std::vector<std::shared_ptr<Sprite>>

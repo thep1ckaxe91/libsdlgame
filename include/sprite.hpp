@@ -10,7 +10,7 @@
 
 #ifndef SDLGAME_SPRITE_
 #define SDLGAME_SPRITE_
-// TODO: there are serveral ideas that might be helful in the future, includes:
+// TODO: thep1ckaxe - there are serveral ideas that might be helful in the future, includes:
 // + add with Container iterator begin and end with template
 // + more proper inheritance design
 

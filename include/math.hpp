@@ -12,14 +12,14 @@ namespace sdlgame::math {
 constexpr double degree_to_radian(double deg) { return deg * M_PI / 180.0; }
 constexpr double radian_to_degree(double rad) { return rad * 180.0 / M_PI; }
 
-
 template <typename T>
 concept Arithmetic = std::floating_point<T> || std::integral<T>;
 
 Arithmetic auto clamp(Arithmetic auto val, Arithmetic auto left,
                       Arithmetic auto right) {
-  if (left > right)
+  if (left > right) {
     std::swap(left, right);
+  }
   return (val < left ? left : (val > right ? right : val));
 }
 
@@ -37,18 +37,31 @@ struct Vector2 {
 
   Vector2() = default;
   explicit Vector2(const SDL_Point &p);
-  Vector2(double, double);
+  Vector2(Arithmetic auto _x, Arithmetic auto _y) : x(_x), y(_y) {}
   Vector2(const Vector2 &) = default;
   Vector2 &operator=(const Vector2 &) = default;
   Vector2 &operator+=(const Vector2 &oth);
   Vector2 &operator-=(const Vector2 &oth);
-  Vector2 &operator*=(double scalar);
-  Vector2 &operator/=(double scalar);
+  Vector2 &operator*=(Arithmetic auto scalar) {
+    x *= scalar;
+    y *= scalar;
+    return *this;
+  }
+  Vector2 &operator/=(Arithmetic auto scalar) {
+    x /= scalar;
+    y /= scalar;
+    return *this;
+  }
   Vector2 operator+(const Vector2 &oth) const;
   Vector2 operator-() const;
   Vector2 operator-(const Vector2 &oth) const;
-  Vector2 operator*(double scalar) const;
-  Vector2 operator/(double scalar) const;
+  Vector2 operator*(Arithmetic auto scalar) const {
+    return Vector2(scalar * x, scalar * y);
+  }
+
+  Vector2 operator/(Arithmetic auto scalar) const {
+    return {x / scalar, y / scalar};
+  }
 
   bool operator==(const Vector2 &oth) const;
   /**
@@ -81,11 +94,21 @@ struct Vector2 {
   /**
    * @return a vector that rotated deg degrees counter clockwise
    * */
-  Vector2 rotate(double deg) const;
+  Vector2 rotate(Arithmetic auto deg) const {
+    double angleInRadians = degree_to_radian(deg);
+    return Vector2(x * std::cos(angleInRadians) - y * std::sin(angleInRadians),
+                   x * std::sin(angleInRadians) + y * std::cos(angleInRadians));
+  }
+
   /**
    *  make the vector rotate deg degrees counter-clockwise
    */
-  void rotate_ip(double deg);
+  void rotate_ip(Arithmetic auto deg) {
+    double _x = x, _y = y;
+    double angleInRadians = degree_to_radian(deg);
+    x = _x * std::cos(angleInRadians) - _y * std::sin(angleInRadians);
+    y = _x * std::sin(angleInRadians) + _y * std::cos(angleInRadians);
+  }
   /**
    * @return distance between 2 point
    */
@@ -111,7 +134,9 @@ struct Vector2 {
   SDL_FPoint to_SDL_FPoint() const;
 };
 
-Vector2 operator*(const double &scalar, const Vector2 &v);
+Vector2 operator*(Arithmetic auto scalar, const Vector2 &v) {
+  return v * scalar;
+}
 
 } // namespace sdlgame::math
 

@@ -7,14 +7,6 @@
 
 namespace sdlgame::rect {
 
-Rect::Rect(double _left, double _top, double _w, double _h)
-    : x(_left), y(_top), w(_w), h(_h) {}
-
-Rect::Rect(double _left, double _top, math::Vector2 _size)
-    : x(_left), y(_top), w(_size.x), h(_size.y) {}
-
-Rect::Rect(math::Vector2 pos, double _w, double _h)
-    : x(pos.x), y(pos.y), w(_w), h(_h) {}
 Rect::Rect(math::Vector2 pos, math::Vector2 size)
     : x(pos.x), y(pos.y), w(size.x), h(size.y) {}
 
@@ -181,26 +173,32 @@ Rect::clipline(const math::Vector2 &st, const math::Vector2 &ed) const {
   // Unroll the loop manually to hint the compiler and eliminate loop overhead
   for (int i = 0; i < 4; ++i) {
     if (p[i] == 0.0) {
-      if (q[i] < 0.0)
+      if (q[i] < 0.0) {
         return std::nullopt;
+}
     } else {
       const double r = q[i] / p[i];
       if (p[i] < 0.0) {
-        if (r > t1)
+        if (r > t1) {
           return std::nullopt;
-        if (r > t0)
+}
+        if (r > t0) {
           t0 = r;
+}
       } else {
-        if (r < t0)
+        if (r < t0) {
           return std::nullopt;
-        if (r < t1)
+}
+        if (r < t1) {
           t1 = r;
+}
       }
     }
   }
 
-  if (t0 > t1)
+  if (t0 > t1) {
     return std::nullopt;
+}
 
   return std::pair<math::Vector2, math::Vector2>{
       {st.x + dx * t0, st.y + dy * t0}, {st.x + dx * t1, st.y + dy * t1}};
@@ -210,9 +208,11 @@ Rect::clipline(const math::Vector2 &st, const math::Vector2 &ed) const {
  * @return return whether the caller collide with any of the rect in the list
  */
 bool Rect::collidelist(std::vector<Rect> &rect_list) const {
-  for (Rect &rect : rect_list)
-    if (colliderect(rect))
+  for (Rect &rect : rect_list) {
+    if (colliderect(rect)) {
       return true;
+}
+}
   return false;
 }
 

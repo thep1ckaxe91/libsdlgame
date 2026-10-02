@@ -7,6 +7,7 @@
 #include "rect.hpp"
 #include "engine.hpp"
 #include "display.hpp"
+#include <cstddef>
 #include <stdexcept>
 #include <optional>
 #include <algorithm>
@@ -86,7 +87,7 @@ public:
       SDL_CHECK(SDL_LockTexture(texture.get(), nullptr, &pixels, &pitch));
       int h = get_height();
       Uint32 *p = static_cast<Uint32 *>(pixels);
-      std::ranges::fill(p, p + ((pitch / static_cast<int>(sizeof(Uint32))) * h),
+      std::ranges::fill(p, p + (static_cast<ptrdiff_t>((pitch / static_cast<int>(sizeof(Uint32))) * h)),
                         color.toUint32Color());
       SDL_UnlockTexture(texture.get());
     }

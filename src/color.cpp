@@ -16,21 +16,21 @@
 
 namespace sdlgame::color {
 
-constexpr size_t __named_color_size = 144;
+constexpr size_t _named_color_size = 144;
 
-struct __NamedColor {
+struct NamedColor {
   std::string_view name;
   uint8_t r;
   uint8_t g;
   uint8_t b;
 
-  constexpr __NamedColor(std::string_view _name,
+  constexpr NamedColor(std::string_view _name,
                          std::initializer_list<uint8_t> value)
       : name(_name), r(*value.begin()), g(*(value.begin() + 1)),
         b(*(value.begin() + 2)) {}
 };
 
-constexpr std::array<__NamedColor, __named_color_size> __named_color = {{
+constexpr std::array<NamedColor, _named_color_size> _named_color = {{
     {"alice blue", {240, 248, 255}},
     {"antique white", {250, 235, 215}},
     {"aqua", {0, 255, 255}},
@@ -191,9 +191,9 @@ Color::Color(std::string_view p_name) : a(255) {
   }
 
   auto it =
-      std::ranges::lower_bound(__named_color, name, {}, &__NamedColor::name);
+      std::ranges::lower_bound(_named_color, name, {}, &NamedColor::name);
 
-  if (it != __named_color.end() && it->name == name) [[likely]] {
+  if (it != _named_color.end() && it->name == name) [[likely]] {
     r = it->r;
     g = it->g;
     b = it->b;
