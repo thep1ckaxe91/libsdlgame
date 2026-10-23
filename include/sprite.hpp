@@ -18,9 +18,6 @@
 // Group owns Sprites, Sprites "know" who own it
 
 template <typename T>
-concept Arithmetic = std::floating_point<T> || std::integral<T>;
-
-template <typename T>
 concept HasRadiusMember = requires(T t) {
   requires Arithmetic<std::remove_cvref_t<decltype(t.radius)>>;
 };
