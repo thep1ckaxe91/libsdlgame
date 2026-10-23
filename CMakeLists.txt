@@ -7,10 +7,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 file(GLOB ENGINE_SOURCES "src/*.cpp")
 
-add_library(GameEngine STATIC ${ENGINE_SOURCES})
-add_library(GameEngine::GameEngine ALIAS GameEngine)
+add_library(libsdlgame STATIC ${ENGINE_SOURCES})
+add_library(libsdlgame::libsdlgame ALIAS libsdlgame)
 
-target_include_directories(GameEngine PUBLIC 
+target_include_directories(libsdlgame PUBLIC 
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
@@ -21,14 +21,14 @@ find_package(SDL2_image REQUIRED)
 find_package(SDL2_ttf REQUIRED)
 find_package(SDL2_mixer REQUIRED)
 
-target_link_libraries(GameEngine PUBLIC 
+target_link_libraries(libsdlgame PUBLIC 
     SDL2::SDL2
     SDL2_image::SDL2_image
-    sdl_ttf::sdl_ttf
+    SDL2_ttf::SDL2_ttf
     SDL2_mixer::SDL2_mixer
 )
 
-target_compile_options(GameEngine PRIVATE
+target_compile_options(libsdlgame PRIVATE
     -Wall 
     -Wextra 
     -Wconversion 
@@ -49,8 +49,8 @@ include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
 # Install the library and export targets
-install(TARGETS GameEngine
-    EXPORT GameEngineTargets
+install(TARGETS libsdlgame
+    EXPORT libsdlgameTargets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -63,29 +63,29 @@ install(DIRECTORY include/
 )
 
 # Export the targets to a file
-install(EXPORT GameEngineTargets
-    FILE GameEngineTargets.cmake
-    NAMESPACE GameEngine::
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/GameEngine
+install(EXPORT libsdlgameTargets
+    FILE libsdlgameTargets.cmake
+    NAMESPACE libsdlgame::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libsdlgame
 )
 
 # Generate Config and Version files
 configure_package_config_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
-    "${CMAKE_CURRENT_BINARY_DIR}/GameEngineConfig.cmake"
-    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/GameEngine
+    "${CMAKE_CURRENT_BINARY_DIR}/libsdlgameConfig.cmake"
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libsdlgame
 )
 
 write_basic_package_version_file(
-    "${CMAKE_CURRENT_BINARY_DIR}/GameEngineConfigVersion.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/libsdlgameConfigVersion.cmake"
     VERSION ${PROJECT_VERSION}
     COMPATIBILITY AnyNewerVersion
 )
 
 install(FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/GameEngineConfig.cmake"
-    "${CMAKE_CURRENT_BINARY_DIR}/GameEngineConfigVersion.cmake"
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/GameEngine
+    "${CMAKE_CURRENT_BINARY_DIR}/libsdlgameConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/libsdlgameConfigVersion.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libsdlgame
 )
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)

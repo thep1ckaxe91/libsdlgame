@@ -12,7 +12,7 @@ class LibSdlGameConan(ConanFile):
         "shared": False, 
         "fPIC": True,
         "sdl/*:wayland": False,
-        "sdl/*:pulseaudio": False
+        "sdl/*:pulse": False
     }
     
     exports_sources = "CMakeLists.txt", "Config.cmake.in", "src/*", "include/*", "tests/*", "assets/*"
