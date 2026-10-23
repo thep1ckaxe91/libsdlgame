@@ -9,6 +9,7 @@ file(GLOB ENGINE_SOURCES "src/*.cpp")
 
 add_library(libsdlgame STATIC ${ENGINE_SOURCES})
 add_library(libsdlgame::libsdlgame ALIAS libsdlgame)
+set_target_properties(libsdlgame PROPERTIES OUTPUT_NAME "sdlgame")
 
 target_include_directories(libsdlgame PUBLIC 
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -21,10 +22,14 @@ find_package(SDL2_image REQUIRED)
 find_package(SDL2_ttf REQUIRED)
 find_package(SDL2_mixer REQUIRED)
 
+if(TARGET sdl_ttf::sdl_ttf AND NOT TARGET SDL2_ttf::SDL2_ttf)
+    add_library(SDL2_ttf::SDL2_ttf ALIAS sdl_ttf::sdl_ttf)
+endif()
+
 target_link_libraries(libsdlgame PUBLIC 
     SDL2::SDL2
     SDL2_image::SDL2_image
-    SDL2_ttf::SDL2_ttf
+    sdl_ttf::sdl_ttf
     SDL2_mixer::SDL2_mixer
 )
 
@@ -46,46 +51,17 @@ target_compile_options(libsdlgame PRIVATE
 )
 
 include(GNUInstallDirs)
-include(CMakePackageConfigHelpers)
 
-# Install the library and export targets
+# Install the library binary
 install(TARGETS libsdlgame
-    EXPORT libsdlgameTargets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
-# Install headers
+# Install public headers
 install(DIRECTORY include/
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/libsdlgame
-)
-
-# Export the targets to a file
-install(EXPORT libsdlgameTargets
-    FILE libsdlgameTargets.cmake
-    NAMESPACE libsdlgame::
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libsdlgame
-)
-
-# Generate Config and Version files
-configure_package_config_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
-    "${CMAKE_CURRENT_BINARY_DIR}/libsdlgameConfig.cmake"
-    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libsdlgame
-)
-
-write_basic_package_version_file(
-    "${CMAKE_CURRENT_BINARY_DIR}/libsdlgameConfigVersion.cmake"
-    VERSION ${PROJECT_VERSION}
-    COMPATIBILITY AnyNewerVersion
-)
-
-install(FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/libsdlgameConfig.cmake"
-    "${CMAKE_CURRENT_BINARY_DIR}/libsdlgameConfigVersion.cmake"
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libsdlgame
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)

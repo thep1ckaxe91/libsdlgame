@@ -15,7 +15,7 @@ class LibSdlGameConan(ConanFile):
         "sdl/*:pulse": False
     }
     
-    exports_sources = "CMakeLists.txt", "Config.cmake.in", "src/*", "include/*", "tests/*", "assets/*"
+    exports_sources = "CMakeLists.txt", "src/*", "include/*", "tests/*", "assets/*"
 
     def requirements(self):
         self.requires("sdl/2.32.10")
@@ -51,7 +51,12 @@ class LibSdlGameConan(ConanFile):
         cmake.install()
 
     def package_info(self):
-        self.cpp_info.libs = ["GameEngine"]
-        self.cpp_info.set_property("cmake_target_name", "GameEngine::GameEngine")
-        # Ensure consumers can include the headers correctly based on how they were installed
-        self.cpp_info.includedirs = ["include", "include/libsdlgame"]
+        self.cpp_info.libs = ["sdlgame"]
+        self.cpp_info.set_property("cmake_target_name", "libsdlgame::libsdlgame")
+        self.cpp_info.set_property("cmake_file_name", "libsdlgame")
+        self.cpp_info.requires = [
+            "sdl::sdl",
+            "sdl_image::sdl_image",
+            "sdl_ttf::sdl_ttf",
+            "sdl_mixer::sdl_mixer"
+        ]
