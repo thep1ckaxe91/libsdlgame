@@ -54,6 +54,7 @@ class LibSdlGameConan(ConanFile):
         self.cpp_info.libs = ["sdlgame"]
         self.cpp_info.set_property("cmake_target_name", "libsdlgame::libsdlgame")
         self.cpp_info.set_property("cmake_file_name", "libsdlgame")
+        self.cpp_info.includedirs = ["include", "include/sdlgame"]
         self.cpp_info.requires = [
             "sdl::sdl",
             "sdl_image::sdl_image",

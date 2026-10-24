@@ -27,6 +27,7 @@ help:
 setup-debug:
 		conan install . --build=missing -s build_type=Debug
 		cmake --preset conan-debug
+		ln -sf $(BUILD_DIR)/Debug/compile_commands.json compile_commands.json
 
 setup-release:
 		conan install . --build=missing -s build_type=Release
@@ -35,6 +36,7 @@ setup-release:
 setup-relwithdebinfo:
 		conan install . --build=missing -s build_type=RelWithDebInfo
 		cmake --preset conan-relwithdebinfo
+		ln -sf $(BUILD_DIR)/RelWithDebInfo/compile_commands.json compile_commands.json
 
 # -----------------------------------------------------------------------------
 # 2. Compilation
