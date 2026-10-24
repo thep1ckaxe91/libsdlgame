@@ -4,7 +4,6 @@
 #include "constants.hpp"
 #include "display.hpp"
 #include "engine.hpp"
-#include "event.hpp"
 #include "math.hpp"
 #include "surface.hpp"
 #include <string>
