@@ -35,9 +35,12 @@ duration_t Clock::tick(double fps) {
   auto target_duration = std::chrono::duration_cast<duration_t>(
       std::chrono::duration<double>(1.0 / fps));
 
+  auto current_time = get_ticks();
+  if (target_time < current_time) {
+    target_time = current_time;
+  }
   target_time += target_duration;
 
-  auto current_time = get_ticks();
   auto time_to_sleep = target_time - current_time - 2ms; // 2ms buf
 
   if (time_to_sleep > duration_t::zero()) {

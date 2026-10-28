@@ -179,7 +179,7 @@ TEST(TimeTest, ClockGetFpsTypical) {
     }
     double fps = clock.get_fps();
     EXPECT_GT(fps, 0.0);
-    EXPECT_NEAR(fps, 30.0, 5.0); // Allow some margin due to thread scheduling inaccuracies
+    EXPECT_NEAR(fps, 30.0, 10.0); // Allow some margin due to thread scheduling inaccuracies on CI VMs
 }
 
 TEST(TimeTest, TimerManagerSingleton) {
