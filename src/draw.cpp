@@ -9,12 +9,10 @@
 namespace sdlgame::draw {
 void rect(sdlgame::surface::Surface<SDL_TEXTUREACCESS_TARGET> &surface,
           sdlgame::color::Color color, rect::Rect v_rect, int width) {
-  std::cerr << "Called API\n";
   SDL_CHECK(SDL_SetRenderTarget(sdlgame::display::get_renderer(),
                                 surface.getTexture()));
   SDL_CHECK(SDL_SetRenderDrawColor(sdlgame::display::get_renderer(), color.r,
                                    color.g, color.b, color.a));
-  std::cerr << "Set target and color\n";
   if (width == 0) {
     SDL_FRect tmp = v_rect.to_SDL_FRect();
     SDL_CHECK(SDL_RenderFillRectF(sdlgame::display::get_renderer(), &tmp));
@@ -34,7 +32,6 @@ void rect(sdlgame::surface::Surface<SDL_TEXTUREACCESS_TARGET> &surface,
     SDL_CHECK(SDL_RenderFillRectF(sdlgame::display::get_renderer(), &bottom));
     SDL_CHECK(SDL_RenderFillRectF(sdlgame::display::get_renderer(), &right));
   }
-  std::cerr << "Drawn\n";
   SDL_CHECK(SDL_SetRenderTarget(sdlgame::display::get_renderer(), nullptr));
 }
 
