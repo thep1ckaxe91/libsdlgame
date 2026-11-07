@@ -35,22 +35,29 @@ target_link_libraries(libsdlgame PUBLIC
     SDL2_mixer::SDL2_mixer
 )
 
-target_compile_options(libsdlgame PRIVATE
-    -Wall 
-    -Wextra 
-    -Wconversion 
-    -Wshadow 
-    -Wpedantic
-    $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>:
-        -O3
-        -ftree-vectorize 
-        -march=native 
-    >
-    $<$<CONFIG:Debug>:
-        -O0 
-        -g3
-    >
-)
+if(MSVC)
+    target_compile_options(libsdlgame PRIVATE
+        /W4
+        /permissive-
+    )
+else()
+    target_compile_options(libsdlgame PRIVATE
+        -Wall 
+        -Wextra 
+        -Wconversion 
+        -Wshadow 
+        -Wpedantic
+        $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>:
+            -O3
+            -ftree-vectorize 
+            -march=native 
+        >
+        $<$<CONFIG:Debug>:
+            -O0 
+            -g3
+        >
+    )
+endif()
 
 include(GNUInstallDirs)
 
