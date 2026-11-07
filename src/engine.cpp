@@ -6,6 +6,7 @@
 #include <iostream>
 
 void sdlgame::init() {
+  SDL_SetMainReady();
   SDL_CHECK(SDL_Init(SDL_INIT_EVERYTHING));
   std::cout << "SDL successfully initialized\n";
   sdlgame::image::init();

@@ -12,10 +12,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       SDL_AUDIODRIVER: dummy
+      OBJC_DISABLE_INITIALIZE_FORK_SAFETY: "YES"
+      GTEST_DEATH_TEST_STYLE: threadsafe
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, windows-2022, macos-latest]
         
     steps:
     - uses: actions/checkout@v4
@@ -45,24 +47,34 @@ jobs:
         conan install . --build=missing -s build_type=Debug -s compiler.cppstd=20 -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True
 
     - name: Build
+      shell: bash
       run: |
-        cmake --preset conan-debug
+        if [ "$RUNNER_OS" = "Windows" ]; then
+          cmake --preset conan-default
+        else
+          cmake --preset conan-debug
+        fi
         cmake --build --preset conan-debug
 
     - name: Run Tests (Linux)
       if: runner.os == 'Linux'
       run: |
         cd build/Debug
-        xvfb-run -a ctest --output-on-failure -j 4
+        xvfb-run -a ctest --output-on-failure -j 2
 
     - name: Run Tests (macOS)
       if: runner.os == 'macOS'
       run: |
         cd build/Debug
-        ctest --output-on-failure -j 4
+        ctest --output-on-failure -j 2
 
     - name: Run Tests (Windows)
       if: runner.os == 'Windows'
+      shell: bash
       run: |
-        cd build/Debug
-        ctest -C Debug --output-on-failure -j 4
+        if [ -f "build/CTestTestfile.cmake" ]; then
+          cd build
+        else
+          cd build/Debug
+        fi
+        ctest -C Debug --output-on-failure -j 2

@@ -74,9 +74,9 @@ TEST(MusicTest, SetGetVolumeOutofBounds) {
 }
 
 TEST(MusicTest, LoadDeathTest) {
-    sdlgame::mixer::init();
     // Test branch where Mix_LoadMUS fails and triggers std::terminate
     EXPECT_DEATH({
+        sdlgame::mixer::init();
         sdlgame::music::load(fs::path{"invalid_non_existent_music_file.mp3"});
     }, "Failing to Create Resource at: Mix_LoadMUS");
 }

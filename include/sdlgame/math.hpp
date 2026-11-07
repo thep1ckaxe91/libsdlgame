@@ -1,9 +1,17 @@
 #pragma once
-#include <concepts>
 #ifndef SDLGAME_MATH_
 #define SDLGAME_MATH_
-#include <SDL2/SDL_rect.h>
+
+#define _USE_MATH_DEFINES
+#include <cmath>
+#include <concepts>
 #include <string>
+#include <utility>
+#include <SDL2/SDL_rect.h>
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 /**
  * namespace for most use math functionality in game dev
  */

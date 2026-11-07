@@ -3,6 +3,7 @@
 #include "engine.hpp"
 #include "math.hpp"
 #include <SDL2/SDL.h>
+#include <array>
 
 namespace sdlgame::mouse {
 
