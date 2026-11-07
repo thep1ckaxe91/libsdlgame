@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include "engine.hpp"
+#include <cstdlib>
 #include <filesystem>
 #include <sstream>
 #include <iostream>
@@ -48,11 +49,17 @@ TEST(EngineDeathTest, InitFailsAndTerminates) {
     // Force SDL_Init to fail by setting invalid driver environment variables.
     // This covers the error handling path which prints to stderr and calls std::terminate().
     // We run it in a death test to safely catch the termination.
-    EXPECT_DEATH({
+    auto death_func = []() {
+#ifdef _WIN32
+        _putenv_s("SDL_VIDEODRIVER", "invalid_driver_name_to_force_failure");
+        _putenv_s("SDL_AUDIODRIVER", "invalid_driver_name_to_force_failure");
+#else
         setenv("SDL_VIDEODRIVER", "invalid_driver_name_to_force_failure", 1);
         setenv("SDL_AUDIODRIVER", "invalid_driver_name_to_force_failure", 1);
+#endif
         sdlgame::init();
-    }, "FATAL: SDL Error at .*engine.cpp:.*\nFailing Expression: SDL_Init\\(SDL_INIT_EVERYTHING\\)");
+    };
+    EXPECT_DEATH(death_func(), "FATAL: SDL Error at .*engine.cpp:.*\nFailing Expression: SDL_Init\\(SDL_INIT_EVERYTHING\\)");
 }
 
 TEST(EngineTest, GetBasePathCachedResult) {

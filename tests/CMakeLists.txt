@@ -30,8 +30,8 @@ add_custom_target(CopyTestAssets ALL
 )
 
 foreach(module IN LISTS TEST_MODULES)
-    add_executable(test_${module} test_${module}.cpp)
-    target_link_libraries(test_${module} PRIVATE libsdlgame GTest::gtest_main)
+    add_executable(test_${module} test_${module}.cpp test_main.cpp)
+    target_link_libraries(test_${module} PRIVATE libsdlgame GTest::gtest)
     add_dependencies(test_${module} CopyTestAssets)
     gtest_discover_tests(test_${module})
 endforeach()

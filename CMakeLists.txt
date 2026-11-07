@@ -24,9 +24,18 @@ find_package(SDL2_image REQUIRED)
 find_package(SDL2_ttf REQUIRED)
 find_package(SDL2_mixer REQUIRED)
 
+if(TARGET SDL2::SDL2main)
+    set_target_properties(SDL2::SDL2main PROPERTIES
+        INTERFACE_LINK_LIBRARIES ""
+        INTERFACE_LINK_OPTIONS ""
+    )
+endif()
+
 if(TARGET sdl_ttf::sdl_ttf AND NOT TARGET SDL2_ttf::SDL2_ttf)
     add_library(SDL2_ttf::SDL2_ttf ALIAS sdl_ttf::sdl_ttf)
 endif()
+
+target_compile_definitions(libsdlgame PUBLIC SDL_MAIN_HANDLED)
 
 target_link_libraries(libsdlgame PUBLIC 
     SDL2::SDL2
