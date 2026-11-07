@@ -12,10 +12,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       SDL_AUDIODRIVER: dummy
+      OBJC_DISABLE_INITIALIZE_FORK_SAFETY: "YES"
+      GTEST_DEATH_TEST_STYLE: threadsafe
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, windows-2022, macos-latest]
         
     steps:
     - uses: actions/checkout@v4
@@ -53,16 +55,16 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         cd build/Debug
-        xvfb-run -a ctest --output-on-failure -j 4
+        xvfb-run -a ctest --output-on-failure -j 2
 
     - name: Run Tests (macOS)
       if: runner.os == 'macOS'
       run: |
         cd build/Debug
-        ctest --output-on-failure -j 4
+        ctest --output-on-failure -j 2
 
     - name: Run Tests (Windows)
       if: runner.os == 'Windows'
       run: |
         cd build/Debug
-        ctest -C Debug --output-on-failure -j 4
+        ctest -C Debug --output-on-failure -j 2
