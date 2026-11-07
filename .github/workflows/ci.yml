@@ -47,8 +47,13 @@ jobs:
         conan install . --build=missing -s build_type=Debug -s compiler.cppstd=20 -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True
 
     - name: Build
+      shell: bash
       run: |
-        cmake --preset conan-debug
+        if [ "$RUNNER_OS" = "Windows" ]; then
+          cmake --preset conan-default
+        else
+          cmake --preset conan-debug
+        fi
         cmake --build --preset conan-debug
 
     - name: Run Tests (Linux)
@@ -65,6 +70,11 @@ jobs:
 
     - name: Run Tests (Windows)
       if: runner.os == 'Windows'
+      shell: bash
       run: |
-        cd build/Debug
+        if [ -f "build/CTestTestfile.cmake" ]; then
+          cd build
+        else
+          cd build/Debug
+        fi
         ctest -C Debug --output-on-failure -j 2
