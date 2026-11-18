@@ -2,25 +2,41 @@
 #ifndef SDLGAME_SURFACE_
 #define SDLGAME_SURFACE_
 #include "color.hpp"
+#include "display.hpp"
+#include "engine.hpp"
 #include "math.hpp"
 #include "memory.hpp"
 #include "rect.hpp"
-#include "engine.hpp"
-#include "display.hpp"
-#include <cstddef>
-#include <stdexcept>
-#include <optional>
+#include <SDL_blendmode.h>
+#include <SDL_render.h>
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <optional>
+#include <stdexcept>
 
 namespace sdlgame::surface {
 
 inline Uint32 optimal_format() { return SDL_PIXELFORMAT_RGBA32; }
 
+enum class BlendMode : uint8_t {
+  NONE = 0x00,  // dstRGBA = srcRGBA
+  BLEND = 0x01, // dstRGB = (srcRGB * srcA) + (dstRGB * (1-srcA))
+                // dstA = srcA + (dstA * (1-srcA))
+  ADD = 0x02,   // dstRGB = (srcRGB * srcA) + dstRGB dstA = dstA */
+  MOD = 0x04,   // dstRGB = srcRGB * dstRGB dstA = dstA */
+  MUL = 0x08, // dstRGB = (srcRGB * dstRGB) + (dstRGB * (1-srcA)) dstA = dstA */
+  INVALID = 0xFF // invalud mode
+};
+
 template <SDL_TextureAccess AccessPattern = SDL_TEXTUREACCESS_TARGET>
 class Surface {
 private:
   sdlgame::memory::SDLUniquePtr<SDL_Texture> texture;
-  struct { void* pixels = nullptr; int pitch = 0; } state;
+  struct {
+    void *pixels = nullptr;
+    int pitch = 0;
+  } state;
 
 public:
   template <SDL_TextureAccess Other> friend class Surface;
@@ -41,7 +57,8 @@ public:
   Surface &operator=(Surface &&) noexcept = default;
 
   explicit Surface(SDL_Surface *surf) {
-    auto tex = SDL_NEW(SDL_CreateTextureFromSurface(sdlgame::display::get_renderer(), surf));
+    auto tex = SDL_NEW(
+        SDL_CreateTextureFromSurface(sdlgame::display::get_renderer(), surf));
     texture.reset(tex);
     size = {static_cast<double>(surf->w), static_cast<double>(surf->h)};
   }
@@ -51,7 +68,8 @@ public:
     int access;
     SDL_QueryTexture(tex, &format, &access, NULL, NULL);
     if (access != AccessPattern) [[unlikely]] {
-      throw std::invalid_argument("The texture doesn't have the given access pattern");
+      throw std::invalid_argument(
+          "The texture doesn't have the given access pattern");
     }
     texture.reset(tex);
     int w, h;
@@ -72,7 +90,8 @@ public:
         sdlgame::rect::Rect(pos, source_size.value_or(math::Vector2(
                                      source.get_width(), source.get_height())))
             .to_SDL_FRect();
-    SDL_CHECK(SDL_SetRenderTarget(sdlgame::display::get_renderer(), texture.get()));
+    SDL_CHECK(
+        SDL_SetRenderTarget(sdlgame::display::get_renderer(), texture.get()));
     SDL_RenderCopyF(sdlgame::display::get_renderer(), source.getTexture(),
                     &srcrect, &dstrect);
     SDL_CHECK(SDL_SetRenderTarget(sdlgame::display::get_renderer(), nullptr));
@@ -87,12 +106,16 @@ public:
       SDL_CHECK(SDL_LockTexture(texture.get(), nullptr, &pixels, &pitch));
       int h = get_height();
       Uint32 *p = static_cast<Uint32 *>(pixels);
-      std::ranges::fill(p, p + (static_cast<ptrdiff_t>((pitch / static_cast<int>(sizeof(Uint32))) * h)),
-                        color.toUint32Color());
+      std::ranges::fill(
+          p,
+          p + (static_cast<ptrdiff_t>(
+                  (pitch / static_cast<int>(sizeof(Uint32))) * h)),
+          color.toUint32Color());
       SDL_UnlockTexture(texture.get());
     }
     if constexpr (AccessPattern == SDL_TEXTUREACCESS_TARGET) {
-      SDL_CHECK(SDL_SetRenderTarget(sdlgame::display::get_renderer(), texture.get()));
+      SDL_CHECK(
+          SDL_SetRenderTarget(sdlgame::display::get_renderer(), texture.get()));
       SDL_CHECK(SDL_SetRenderDrawColor(sdlgame::display::get_renderer(),
                                        color.r, color.g, color.b, color.a));
       SDL_CHECK(SDL_RenderClear(sdlgame::display::get_renderer()));
@@ -100,15 +123,22 @@ public:
     }
   }
 
-  void lock() requires(AccessPattern == SDL_TEXTUREACCESS_STREAMING) {
-    SDL_CHECK(SDL_LockTexture(texture.get(), nullptr, &state.pixels, &state.pitch));
+  void lock()
+    requires(AccessPattern == SDL_TEXTUREACCESS_STREAMING)
+  {
+    SDL_CHECK(
+        SDL_LockTexture(texture.get(), nullptr, &state.pixels, &state.pitch));
   }
 
-  std::tuple<void *, int> get_lock() const requires(AccessPattern == SDL_TEXTUREACCESS_STREAMING) {
+  std::tuple<void *, int> get_lock() const
+    requires(AccessPattern == SDL_TEXTUREACCESS_STREAMING)
+  {
     return {state.pixels, state.pitch};
   }
 
-  void unlock() requires(AccessPattern == SDL_TEXTUREACCESS_STREAMING) {
+  void unlock()
+    requires(AccessPattern == SDL_TEXTUREACCESS_STREAMING)
+  {
     state.pixels = nullptr;
     state.pitch = 0;
     SDL_UnlockTexture(texture.get());
@@ -120,9 +150,13 @@ public:
     SDL_CHECK(SDL_QueryTexture(texture.get(), &format, nullptr, &w, &h));
 
     if constexpr (To == SDL_TEXTUREACCESS_TARGET) {
-      SDL_Texture *targetTexture = SDL_NEW(SDL_CreateTexture(sdlgame::display::get_renderer(), format, SDL_TEXTUREACCESS_TARGET, w, h));
-      SDL_CHECK(SDL_SetRenderTarget(sdlgame::display::get_renderer(), targetTexture));
-      SDL_CHECK(SDL_RenderCopy(sdlgame::display::get_renderer(), texture.get(), nullptr, nullptr));
+      SDL_Texture *targetTexture =
+          SDL_NEW(SDL_CreateTexture(sdlgame::display::get_renderer(), format,
+                                    SDL_TEXTUREACCESS_TARGET, w, h));
+      SDL_CHECK(
+          SDL_SetRenderTarget(sdlgame::display::get_renderer(), targetTexture));
+      SDL_CHECK(SDL_RenderCopy(sdlgame::display::get_renderer(), texture.get(),
+                               nullptr, nullptr));
       SDL_CHECK(SDL_SetRenderTarget(sdlgame::display::get_renderer(), nullptr));
       auto res = Surface<To>{};
       res.texture.reset(targetTexture);
@@ -134,28 +168,52 @@ public:
     if constexpr (AccessPattern == SDL_TEXTUREACCESS_TARGET) {
       staging_target = texture.get();
     } else {
-      staging_target = SDL_NEW(SDL_CreateTexture(sdlgame::display::get_renderer(), format, SDL_TEXTUREACCESS_TARGET, w, h));
-      SDL_CHECK(SDL_SetRenderTarget(sdlgame::display::get_renderer(), staging_target));
-      SDL_CHECK(SDL_RenderCopy(sdlgame::display::get_renderer(), texture.get(), nullptr, nullptr));
+      staging_target =
+          SDL_NEW(SDL_CreateTexture(sdlgame::display::get_renderer(), format,
+                                    SDL_TEXTUREACCESS_TARGET, w, h));
+      SDL_CHECK(SDL_SetRenderTarget(sdlgame::display::get_renderer(),
+                                    staging_target));
+      SDL_CHECK(SDL_RenderCopy(sdlgame::display::get_renderer(), texture.get(),
+                               nullptr, nullptr));
     }
 
     sdlgame::memory::SDLUniquePtr<SDL_Surface> cpu_buffer;
-    cpu_buffer.reset(SDL_NEW(SDL_CreateRGBSurfaceWithFormat(0, w, h, 32, format)));
-    SDL_CHECK(SDL_SetRenderTarget(sdlgame::display::get_renderer(), staging_target));
-    SDL_CHECK(SDL_RenderReadPixels(sdlgame::display::get_renderer(), nullptr, format, cpu_buffer->pixels, cpu_buffer->pitch));
+    cpu_buffer.reset(
+        SDL_NEW(SDL_CreateRGBSurfaceWithFormat(0, w, h, 32, format)));
+    SDL_CHECK(
+        SDL_SetRenderTarget(sdlgame::display::get_renderer(), staging_target));
+    SDL_CHECK(SDL_RenderReadPixels(sdlgame::display::get_renderer(), nullptr,
+                                   format, cpu_buffer->pixels,
+                                   cpu_buffer->pitch));
     SDL_CHECK(SDL_SetRenderTarget(sdlgame::display::get_renderer(), nullptr));
 
     if constexpr (AccessPattern != SDL_TEXTUREACCESS_TARGET) {
       SDL_DestroyTexture(staging_target);
     }
 
-    SDL_Texture *final_texture = SDL_NEW(SDL_CreateTexture(sdlgame::display::get_renderer(), format, To, w, h));
-    SDL_CHECK(SDL_UpdateTexture(final_texture, nullptr, cpu_buffer->pixels, cpu_buffer->pitch));
+    SDL_Texture *final_texture = SDL_NEW(
+        SDL_CreateTexture(sdlgame::display::get_renderer(), format, To, w, h));
+    SDL_CHECK(SDL_UpdateTexture(final_texture, nullptr, cpu_buffer->pixels,
+                                cpu_buffer->pitch));
 
     auto res = Surface<To>{};
     res.texture.reset(final_texture);
     res.size = {static_cast<double>(w), static_cast<double>(h)};
     return res;
+  }
+
+  void set_blendmode(BlendMode mode) {
+    SDL_CHECK(SDL_SetTextureBlendMode(this->texture.get(),
+                                      static_cast<SDL_BlendMode>(mode)));
+  }
+
+  BlendMode get_blendmode() const {
+    SDL_BlendMode mode;
+    SDL_CHECK(SDL_GetTextureBlendMode(this->texture.get(), &mode));
+    if (mode == SDL_BLENDMODE_INVALID) {
+      return BlendMode::INVALID;
+    }
+    return static_cast<BlendMode>(mode);
   }
 
   math::Vector2 get_size() const { return size; }
