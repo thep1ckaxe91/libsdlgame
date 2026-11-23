@@ -2,23 +2,23 @@
 #ifndef SDLGAME_MATH_
 #define SDLGAME_MATH_
 
-#define _USE_MATH_DEFINES
+#include <SDL2/SDL_rect.h>
 #include <cmath>
 #include <concepts>
 #include <string>
 #include <utility>
-#include <SDL2/SDL_rect.h>
 
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
 /**
  * namespace for most use math functionality in game dev
  */
 namespace sdlgame::math {
 
-constexpr double degree_to_radian(double deg) { return deg * M_PI / 180.0; }
-constexpr double radian_to_degree(double rad) { return rad * 180.0 / M_PI; }
+constexpr double degree_to_radian(double deg) {
+  return deg * std::numbers::pi / 180.0;
+}
+constexpr double radian_to_degree(double rad) {
+  return rad * 180.0 / std::numbers::pi;
+}
 
 template <typename T>
 concept Arithmetic = std::floating_point<T> || std::integral<T>;
@@ -36,16 +36,17 @@ Arithmetic auto clamp(Arithmetic auto val, Arithmetic auto left,
  * since the simplicity of 2d vector, we dont need get and set function
  *
  * also for some dumb reason, you can do Vector2 * number, but not number *
- * Vector2
+ * Vector2??
  *
  */
 struct Vector2 {
   double x = 0;
   double y = 0;
 
-  Vector2() = default;
+  constexpr Vector2() = default;
+  constexpr Vector2(Arithmetic auto _x, Arithmetic auto _y) : x(_x), y(_y) {}
   explicit Vector2(const SDL_Point &p);
-  Vector2(Arithmetic auto _x, Arithmetic auto _y) : x(_x), y(_y) {}
+
   Vector2(const Vector2 &) = default;
   Vector2 &operator=(const Vector2 &) = default;
   Vector2 &operator+=(const Vector2 &oth);
